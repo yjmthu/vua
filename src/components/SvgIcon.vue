@@ -1,6 +1,6 @@
 <template>
-  <svg :class="classList">
-    <use :xlink:href="`#icon-${name}`" :style="styleDict"></use>
+  <svg :class="classList" :style="styleSheet">
+    <use :xlink:href="`#icon-${name}`"></use>
   </svg>
 </template>
 
@@ -22,9 +22,9 @@ export default class SvgIcon extends Vue {
   size!: string
   className?: string
 
-  get styleDict () {
+  get styleSheet () {
     return {
-      with: this.size,
+      width: this.size,
       height: this.size,
       color: 'inherit'
     }

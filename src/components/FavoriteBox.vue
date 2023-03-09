@@ -4,6 +4,7 @@
       <SvgIcon name="PencilSquare" size="30px" @click="toggleMode('edit')"/>
       <SvgIcon name="Trash" size="30px" @click="toggleMode('delete')"/>
       <SvgIcon name="PlusSmall" size="30px" @click="enableBookmarkEdit"/>
+      <SvgIcon name="ViewfinderCircle" size="30px" @click="$router.push({path: 'scan'})"/>
     </nav>
     <ul ref="favorite-list" :style="{'--visible': mode !== 'normal' ? 'block' : 'none'}">
       <li :content="content" v-for="(data, index) in favoriteData" :key="index" :href="data.url" :index="index">{{ data.name }}</li>
@@ -129,13 +130,12 @@ export default class FavoriteBox extends Vue {
 nav {
   padding: 2px;
   border-bottom: solid 1px blue;
+  color: white;
 
-  & > svg {
+  & > * {
     position: relative;
-    width: 30px;
-    height: 30px;
     box-sizing: border-box;
-    color: white;
+
     background-color: transparent;
     border-radius: 6px;
     padding: 4px 6px;

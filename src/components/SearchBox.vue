@@ -2,9 +2,7 @@
   <div id="input">
     <div>
       <input id="search-input" type="search" @keydown="submitSearch" @input="getSuggests">
-      <svg @click="directSearch" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
-      </svg>
+      <SvgIcon @click="directSearch" name="Magnifier" size="24px"/>
     </div>
     <SuggestBox :suggests="suggests" :selected="selected" v-show="focused"/>
   </div>
@@ -14,23 +12,20 @@
 import { Vue, Options } from 'vue-class-component'
 import SuggestBox from './SuggestBox.vue'
 import fetchJSONP from 'fetch-jsonp'
+import SvgIcon from './SvgIcon.vue'
 
 import { gotoPage } from '@/utils/public'
 
 @Options({
   components: {
-    SuggestBox
+    SuggestBox,
+    SvgIcon
   }
 })
 export default class SearchBox extends Vue {
   suggests = new Array<string>()
   selected = -1
   focused = false
-
-  // bingApi = axios.create({
-  //   baseURL: '/bing',
-  //   timeout: 2000
-  // })
 
   mounted (): void {
     document.body.addEventListener('click', ev => {
@@ -160,8 +155,6 @@ svg {
   position: absolute;
   right: 13px;
   top: 50%;
-  width: 24px;
-  height: 24px;
   color: white;
   transform: translateY(-50%);
 }
