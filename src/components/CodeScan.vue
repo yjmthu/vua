@@ -28,7 +28,15 @@
 import { Vue, Options } from 'vue-class-component'
 import jsQR, { QRCode } from 'jsqr'
 
-@Options({})
+@Options({
+  beforeRouteLeave (to, from, next) {
+    // 执行回退逻辑
+    if (this.active) {
+      this.stopScan()
+    }
+    next()
+  }
+})
 export default class CodeScan extends Vue {
   facingMode: 'environment' | 'user' = 'environment'
   canvas: HTMLCanvasElement | null = null
@@ -47,13 +55,6 @@ export default class CodeScan extends Vue {
     this.video.autoplay = true
     this.canvasCtx = this.canvas.getContext('2d')
     this.video.playsInline = true
-  }
-
-  beforeDestroy () {
-    if (this.active) {
-      this.stopScan()
-    }
-    alert('离开路由')
   }
 
   startScan () {

@@ -16,9 +16,9 @@ import HomeView from './views/HomeView.vue'
   }
 })
 export default class App extends Vue {
-  mounted (): void {
-    this.$router.push({ path: '/' })
-  }
+  // mounted (): void {
+  //   this.$router.push({ path: '/' })
+  // }
 }
 </script>
 

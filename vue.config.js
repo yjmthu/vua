@@ -5,7 +5,7 @@ function resolve (dir) {
 }
 
 module.exports = defineConfig({
-  publicPath: './',
+  publicPath: '/vua/',
   // assetsPublicPath: './',
   transpileDependencies: true,
   chainWebpack: config => {
