@@ -152,6 +152,7 @@ ul {
   // grid-gap: 20px 20px;
   // justify-content: space-between;
   grid-template-columns: repeat(auto-fill, 50px);
+  row-gap: 8px;
   list-style: none;
 
   padding: 2px;
