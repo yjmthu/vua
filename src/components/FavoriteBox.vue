@@ -9,7 +9,11 @@
     <ul ref="favorite-list" :style="{'--visible': mode !== 'normal' ? 'block' : 'none'}">
       <li :content="content" v-for="(data, index) in favoriteData" :key="index" :href="data.url" :index="index">{{ data.name }}</li>
     </ul>
-    <BookmarkEdit v-if="bookmarkEdit" @bookmarkEdit="enableBookmarkEdit" @addFavorite="addFavorite"/>
+    <BookmarkEdit v-if="bookmarkEdit"
+     :favoriteData="favoriteData"
+     :index="index"
+     @bookmarkEdit="enableBookmarkEdit"
+     @addFavorite="addFavorite"/>
     <div @click="$emit('toggleVisbility')"></div>
   </div>
 </template>
@@ -18,11 +22,7 @@
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
 import BookmarkEdit from './BookmarkEdit.vue'
-
-interface BookMark {
-  name: string
-  url: string
-}
+import { BookMark } from '@/utils/typedef'
 
 @Options({
   components: {
@@ -43,18 +43,27 @@ export default class FavoriteBox extends Vue {
   ]
 
   bookmarkEdit = false
+  index = -1
   mode: 'normal' | 'delete' | 'edit' = 'normal'
 
   enableBookmarkEdit (on: boolean) {
     this.bookmarkEdit = on
+    if (!on) {
+      this.index = -1
+      this.mode = 'normal'
+    }
   }
 
   toggleMode (m = this.mode) {
     this.mode = this.mode === m ? 'normal' : m
   }
 
-  addFavorite (data: BookMark) {
-    this.favoriteData.push(data)
+  addFavorite (data: BookMark, index: number) {
+    if (index === -1) {
+      this.favoriteData.push(data)
+    } else {
+      this.favoriteData[index] = data
+    }
     localStorage.bookmarks = JSON.stringify(this.favoriteData)
   }
 
@@ -92,6 +101,10 @@ export default class FavoriteBox extends Vue {
             break
           }
           case 'edit': {
+            const index = target.getAttribute('index')
+            if (!index) return
+            this.index = Number(index)
+            this.enableBookmarkEdit(true)
             break
           }
           case 'normal': {
@@ -110,7 +123,7 @@ export default class FavoriteBox extends Vue {
 <style scoped lang="scss">
 #favorite-box {
   // position: relative;
-  width: 80%;
+  width: 40%;
   height: 400px;
   background-color: rgba(90, 90, 90, 0.6);
   border-radius: 10px;
@@ -124,6 +137,12 @@ export default class FavoriteBox extends Vue {
     width: calc(100% - 60px);
     height: 40px;
     bottom: 0;
+  }
+}
+
+@media screen and (max-width: 720px) {
+  #favorite-box {
+    width: 80%;
   }
 }
 

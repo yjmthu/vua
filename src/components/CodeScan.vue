@@ -140,7 +140,7 @@ export default class CodeScan extends Vue {
   openResult () {
     const result = this.$refs.result as HTMLInputElement
     if (result.value.length) {
-      window.location.href = result.value
+      window.open(result.value)
     } else {
       alert('空的链接无法打开')
     }
