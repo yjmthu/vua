@@ -3,4 +3,11 @@ interface BookMark {
   url: string
 }
 
-export { BookMark }
+interface FavoriteLink {
+  text: string
+  url: string
+  icon: string
+  color: string
+}
+
+export { BookMark, FavoriteLink }

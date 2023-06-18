@@ -1,6 +1,7 @@
 <template>
   <div id="main">
     <div id="logo" @click="toggleFavrotite"></div>
+    <DirectLinks/>
     <SearchBox/>
     <FavoriteBox v-show="showFavorite" @toggleVisbility="toggleFavrotite"/>
   </div>
@@ -11,11 +12,13 @@ import { Options, Vue } from 'vue-class-component'
 // import HelloWorld from '@/components/HelloWorld.vue' // @ is an alias to /src
 import SearchBox from '@/components/SearchBox.vue'
 import FavoriteBox from '@/components/FavoriteBox.vue'
+import DirectLinks from '@/components/DirectLinks.vue'
 
 @Options({
   components: {
     SearchBox,
-    FavoriteBox
+    FavoriteBox,
+    DirectLinks
   }
 })
 export default class HomeView extends Vue {

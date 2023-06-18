@@ -41,6 +41,9 @@ export default class App extends Vue {
   background-image: url(https://w.wallhaven.cc/full/9m/wallhaven-9mjoy1.png);
   background-size: cover;
   background-position: center;
+
+  --icon-size: 56px;
+  --icon-row-size: 620px;
 }
 
 nav {
@@ -59,6 +62,8 @@ nav {
 @media screen and (max-width: 720px) {
   #app {
     background-image: url(https://cloud.tsinghua.edu.cn/f/40adf3c5aaee4fd6ac77/?dl=1);
+    --icon-size: 48px;
+    --icon-row-size: 300px;
   }
 }
 </style>

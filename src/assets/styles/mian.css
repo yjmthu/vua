@@ -19,6 +19,10 @@ body {
   align-items: center;
 }
 
+a {
+  text-decoration: none;
+}
+
 .center {
   position: absolute;
   left: 50%;
