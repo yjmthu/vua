@@ -31,7 +31,7 @@ export default class HomeView extends Vue {
 #logo {
   width: 360px;
   height: 60px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
   background-image: url(../assets/icons/microsoft.svg);
   background-size: cover;
   background-position: center;
@@ -49,7 +49,7 @@ export default class HomeView extends Vue {
   #logo {
     width: 210px;
     height: 35px;
-    margin-bottom: 10px;
+    margin-bottom: 16px;
   }
 }
 </style>

@@ -7,7 +7,11 @@
       <SvgIcon name="ViewfinderCircle" size="30px" @click="$router.push({path: 'scan'})"/>
     </nav>
     <ul ref="favorite-list" :style="{'--visible': mode !== 'normal' ? 'block' : 'none'}">
-      <li :content="content" v-for="(data, index) in favoriteData" :key="index" :href="data.url" :index="index">{{ data.name }}</li>
+      <li v-for="(data, index) in favoriteData" :key="index" :href="data.url" :index="index">
+        {{ data.name }}
+        <SvgIcon class="li-icon" name="PlusSmall" v-if="mode=='edit'" size="14px"/>
+        <SvgIcon class="li-icon" name="MinusSmall" v-else-if="mode=='delete'" size="14px"/>
+      </li>
     </ul>
     <BookmarkEdit v-if="bookmarkEdit"
      :favoriteData="favoriteData"
@@ -72,10 +76,6 @@ export default class FavoriteBox extends Vue {
     localStorage.bookmarks = JSON.stringify(this.favoriteData)
   }
 
-  get content () {
-    return this.mode === 'delete' ? '-' : '+'
-  }
-
   mounted (): void {
     const tmp = localStorage.getItem('bookmarks')
     if (tmp) {
@@ -110,7 +110,8 @@ export default class FavoriteBox extends Vue {
           case 'normal': {
             const href = target.getAttribute('href')
             if (!href) return
-            window.location.href = href
+            // window.location.href = href
+            window.open(href)
             break
           }
         }
@@ -126,6 +127,7 @@ export default class FavoriteBox extends Vue {
   width: 40%;
   height: 400px;
   background-color: rgba(90, 90, 90, 0.6);
+  backdrop-filter: blur(2px);
   border-radius: 10px;
   z-index: 100;
   padding: 10px 20px 40px;
@@ -197,24 +199,18 @@ ul {
     color: white;
     cursor: pointer;
 
-    &::after {
-      // content: var(--content, '-');
-      content: attr(content);
-      display: var(--visible, 'none');
+    &>.li-icon {
       position: absolute;
 
-      font-size: 6px;
-      background-color: black;
       color: white;
-
+      background-color: rgba(0, 0, 0, 0.773);
       width: 16px;
       height: 16px;
-
-      padding: auto;
+      padding: 1px;
       border-radius: 8px;
 
-      right: 0;
-      top: 0;
+      right: -5px;
+      top: -5px;
     }
   }
 }

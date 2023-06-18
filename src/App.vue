@@ -37,7 +37,8 @@ export default class App extends Vue {
   display: grid;
   align-items: center;
 
-  background-image: url(https://source.unsplash.com/random);
+  // background-image: url(https://source.unsplash.com/random);
+  background-image: url(https://w.wallhaven.cc/full/9m/wallhaven-9mjoy1.png);
   background-size: cover;
   background-position: center;
 }
