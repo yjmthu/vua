@@ -12,7 +12,8 @@ function gotoPage (text: string, smart: boolean) {
   }
 
   if (href) {
-    window.location.href = href
+    // window.location.href = href
+    window.open(href)
   }
 }
 
