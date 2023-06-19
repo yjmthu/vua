@@ -65,7 +65,7 @@ nav {
     background-image: url(https://cloud.tsinghua.edu.cn/f/40adf3c5aaee4fd6ac77/?dl=1);
     --icon-size: 48px;
     --icon-row-size: 300px;
-    --input-width: 260px;
+    --input-width: 200px;
   }
 }
 </style>
