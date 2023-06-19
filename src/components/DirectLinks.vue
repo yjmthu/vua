@@ -1,5 +1,5 @@
 <template>
-  <ul>
+  <ul class="row-center">
     <li v-for="(item, index) in links" :key="index">
       <a :href="item.url" target="_blank">
         <img :src="item.icon" :style="{'background-color': item.color}"/>
@@ -79,6 +79,7 @@ a {
   flex-direction: column;
   // vertical-align: middle;
 }
+
 img {
   width: var(--icon-size);
   height: var(--icon-size);
@@ -92,8 +93,6 @@ ul {
   top: 100%;
   left: 50%;
   transform: translate(-50%, 5px);
-  display: flex;
-  flex-direction: row;
   flex-wrap: wrap;
   width: var(--icon-row-size);
   justify-content: center;

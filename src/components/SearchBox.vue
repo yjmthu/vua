@@ -1,24 +1,31 @@
 <template>
   <div id="input">
-    <div>
-      <input id="search-input" type="search" @keydown="submitSearch" @input="getSuggests">
-      <SvgIcon @click="directSearch" name="Magnifier" size="24px"/>
+    <div id="engine-select" class="row-center scrub-backgound" @click="showEngines = !showEngines">
+      <SvgIcon :name="currentEngine.icon" size="24px"></SvgIcon>
+      <SvgIcon name="Down" size="12px"></SvgIcon>
+    </div>
+    <input id="search-input" class="scrub-backgound" type="search" @keydown="submitSearch" @input="getSuggests">
+    <div id="search-button" class="row-center scrub-backgound" @click="directSearch">
+      <SvgIcon name="Magnifier" size="24px"/>
     </div>
     <SuggestBox :suggests="suggests" :selected="selected" v-show="focused"/>
+    <EngineBox v-if="showEngines" :currentEngineIndex=enginesData.currentEngineIndex @setEngineIndex="setEngineIndex"></EngineBox>
   </div>
 </template>
 
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component'
 import SuggestBox from './SuggestBox.vue'
-import fetchJSONP from 'fetch-jsonp'
 import SvgIcon from './SvgIcon.vue'
+import EngineBox from './EngineBox.vue'
 
+import { engines } from '@/utils/search'
 import { gotoPage } from '@/utils/public'
 
 @Options({
   components: {
     SuggestBox,
+    EngineBox,
     SvgIcon
   }
 })
@@ -26,14 +33,37 @@ export default class SearchBox extends Vue {
   suggests = new Array<string>()
   selected = -1
   focused = false
+  showEngines = false
+  enginesData = {
+    currentEngineIndex: 0
+  }
+
+  get currentEngine () {
+    return engines[this.enginesData.currentEngineIndex]
+  }
+
+  private loadEngineData () {
+    const tmp = localStorage.getItem('enginesData')
+    if (tmp) {
+      this.enginesData = JSON.parse(tmp)
+    }
+  }
+
+  setEngineIndex (index: number) {
+    this.enginesData.currentEngineIndex = index
+    localStorage.setItem('enginesData', JSON.stringify(this.enginesData))
+    this.showEngines = false
+  }
 
   mounted (): void {
+    this.loadEngineData()
+
     document.body.addEventListener('click', ev => {
       if (!ev.target) return
       const target = ev.target as HTMLElement
       if (target.id !== 'search-input') {
         if (target.classList.contains('suggest-item')) {
-          gotoPage(target.innerHTML, true)
+          gotoPage(this.currentEngine.url, target.innerHTML, true)
         }
         this.toggleSuggests(false)
       } else {
@@ -45,7 +75,7 @@ export default class SearchBox extends Vue {
 
   directSearch () {
     const el = document.getElementById('search-input') as HTMLInputElement | null
-    if (el) gotoPage(el.value, false)
+    if (el) gotoPage(this.currentEngine.url, el.value, false)
   }
 
   toggleSuggests (on: boolean) {
@@ -64,9 +94,9 @@ export default class SearchBox extends Vue {
     switch (event.key) {
       case 'Enter':
         if (this.selected !== -1 && this.selected < this.suggests.length) {
-          gotoPage(this.suggests[this.selected], true)
+          gotoPage(this.currentEngine.url, this.suggests[this.selected], true)
         } else {
-          gotoPage(target.value, true)
+          gotoPage(this.currentEngine.url, target.value, true)
         }
         break
       case 'ArrowUp':
@@ -102,60 +132,67 @@ export default class SearchBox extends Vue {
       this.toggleSuggests(false)
       return
     }
-    fetchJSONP(`https://api.bing.com/qsonhs.aspx?type=cb&q=${target.value}`, {
-      jsonpCallback: 'cb' // 默认callback，改为cb
+
+    this.currentEngine.getSuggests(target.value, (result: string[]) => {
+      this.suggests = result
+      this.selected = -1
+      if (this.suggests.length) {
+        this.toggleSuggests(target.value.length !== 0)
+      }
     })
-      .then(response => response.json())
-      .then(data => {
-        const theAS = data.AS
-        this.suggests = []
-        this.selected = -1
-        if (theAS.FullResults) {
-          for (const i of theAS.Results) {
-            for (const j of i.Suggests) {
-              this.suggests.push(j.Txt)
-            }
-          }
-          this.toggleSuggests(target.value.length !== 0)
-        } else {
-          console.log('空的搜索建议', data.AS)
-        }
-      })
+    // jsonpCallback: 'cb' // 默认callback，改为cb
   }
 }
 </script>
 
 <style scoped lang="scss">
-#input, input {
+#input {
   position: relative;
-}
+  display: flex;
+  --input-height: 3.5em;
+  --engine-box-width: 54px;
+  --input-radius: 1.25em;
+  height: var(--input-height);
 
-input {
-  box-sizing: border-box;
-  width: 544px;
-  /* height: 2.5em; */
-  padding: 1em 4em 1em 1.25em;
-  border-radius: 1.25em;
-  border: none;
-  color: white;
-  background-color: transparent;
-  backdrop-filter: blur(5px);
-  outline: none;
-  border: 2px solid rgba(200, 200, 200, 0.5);
-}
-
-@media screen and (max-width: 720px) {
-  input {
-    width: 320px;
+  & > {
+    height: 100%;
+    box-sizing: border-box;
   }
 }
 
-svg {
-  cursor: pointer;
-  position: absolute;
-  right: 13px;
-  top: 50%;
+input {
+  top: 0;
+  width: var(--input-width);
+  padding: 1em;
+  border-left: none;
+  border-right: none;
   color: white;
-  transform: translateY(-50%);
+}
+
+#engine-select {
+  cursor: pointer;
+  width: var(--engine-box-width);
+  padding-left: 10px;
+  border-right: none;
+  border-radius: var(--input-radius) 0 0 var(--input-radius);
+  background-color: #ffffff1a;
+
+  &:hover {
+    background-color: #ffffff66;
+  }
+}
+
+#search-button {
+  cursor: pointer;
+  border-left: none;
+  width: var(--engine-box-width);
+  border-radius: 0 var(--input-radius) var(--input-radius) 0;
+  background-color: #99999940;
+  justify-content: center;
+  color: #056de8;
+
+  &:hover {
+    background-color: #99999964;
+  }
 }
 </style>

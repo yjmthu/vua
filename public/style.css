@@ -13,6 +13,32 @@ html, body {
   transform: translate(-50%, -50%);
 }
 
+.scrub-backgound {
+  background-color: transparent;
+  backdrop-filter: blur(5px);
+  outline: none;
+  border: 2px solid #c8c8c880;
+}
+
+.dark-scrub-backgound {
+  /* background-color: transparent; */
+  backdrop-filter: blur(2px);
+  background-color: #5a5a5a99;
+  outline: none;
+}
+
+.row-center {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.column-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* Designing for scroll-bar */
 ::-webkit-scrollbar {
   width: 2px;

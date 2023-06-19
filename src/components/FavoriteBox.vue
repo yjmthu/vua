@@ -1,5 +1,5 @@
 <template>
-  <div id="favorite-box" class="center">
+  <div id="favorite-box" class="center dark-scrub-backgound">
     <nav>
       <SvgIcon name="PencilSquare" size="30px" @click="toggleMode('edit')"/>
       <SvgIcon name="Trash" size="30px" @click="toggleMode('delete')"/>
@@ -126,8 +126,6 @@ export default class FavoriteBox extends Vue {
   // position: relative;
   width: 40%;
   height: 400px;
-  background-color: rgba(90, 90, 90, 0.6);
-  backdrop-filter: blur(2px);
   border-radius: 10px;
   z-index: 100;
   padding: 10px 20px 40px;

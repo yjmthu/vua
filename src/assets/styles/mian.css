@@ -30,6 +30,12 @@ a {
   transform: translate(-50%, -50%);
 }
 
+.row-center {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
 /* Designing for scroll-bar */
 ::-webkit-scrollbar {
   width: 2px;
