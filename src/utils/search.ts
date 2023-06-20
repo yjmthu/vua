@@ -150,7 +150,7 @@ const engines: EngineData[] = [
     icon: 'Yandex',
     url: 'https://yandex.com/search/?text=',
     getSuggests: (text, callback) => {
-      axios.get(`https://yandex.com/suggest/suggest-ya.cgi?v=4&bemjson=0&part=${text}`)
+      axios.get(`https://suggest.yandex.com/suggest-ff.cgi?part=${text}&uil=en&v=3&sn=5`)
         .then(response => {
           const data = response.data
           if (!data || data.length < 2) return

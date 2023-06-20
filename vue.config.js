@@ -14,10 +14,10 @@ const copyFiles = [
     from: path.resolve('target/shared/icons'),
     to: `${path.resolve('dist')}/icons`
   },
-  {
-    from: path.resolve('target/shared/sample_rules.json'),
-    to: `${path.resolve('dist')}/sample_rules.json`
-  },
+  // {
+  //   from: path.resolve('target/shared/sample_rules.json'),
+  //   to: `${path.resolve('dist')}/sample_rules.json`
+  // },
 ]
 
 // 复制插件

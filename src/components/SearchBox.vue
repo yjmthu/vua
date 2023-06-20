@@ -5,7 +5,7 @@
       <SvgIcon name="Down" size="12px"></SvgIcon>
     </div>
     <div id="search-input-box">
-      <input id="search-input" type="search" class="scrub-backgound" @keydown="submitSearch" @input="getSuggests" placeholder="输入搜索内容" required>
+      <input id="search-input" type="search" class="scrub-backgound" @keydown="submitSearch" @input="e => getSuggests(e.target as HTMLInputElement)" placeholder="输入搜索内容" required>
       <i @click="clearInput">
         <SvgIcon name="Clear" size="30px"/>
       </i>
@@ -56,6 +56,8 @@ export default class SearchBox extends Vue {
 
   setEngineIndex (index: number) {
     this.enginesData.currentEngineIndex = index
+    const input = document.getElementById('search-input') as HTMLInputElement | null
+    if (input) this.getSuggests(input)
     localStorage.setItem('enginesData', JSON.stringify(this.enginesData))
     this.showEngines = false
   }
@@ -151,8 +153,7 @@ export default class SearchBox extends Vue {
         break
       case 'Tab':
         this.shiftEngine(!event.shiftKey)
-        document.getElementById('search-input')?.focus()
-        this.getSuggests(event)
+        this.getSuggests(target)
         event.preventDefault()
         break
       default:
@@ -161,10 +162,8 @@ export default class SearchBox extends Vue {
     }
   }
 
-  getSuggests (event: Event): void {
-    if (!event.target) return
-    const target = event.target as HTMLInputElement
-    if (target.value.length === 0) {
+  getSuggests (target: HTMLInputElement) {
+    if (!target || target.value.length === 0) {
       this.toggleSuggests(false)
       return
     }
