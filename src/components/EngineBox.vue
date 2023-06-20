@@ -37,6 +37,7 @@ export default class EngineBox extends Vue {
 <style scoped lang="scss">
 div {
   position: absolute;
+  user-select: none;
   border-radius: 10px;
   // background-color: bisque;
   top: 110%;
@@ -45,7 +46,7 @@ div {
 
 ul {
   padding-left: 0;
-  gap: 16px;
+  gap: var(--engine-icon-gap);
   flex-wrap: wrap;
   padding: 2px 10px;
 }

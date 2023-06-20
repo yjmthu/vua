@@ -45,6 +45,7 @@ export default class App extends Vue {
   --icon-size: 56px;
   --icon-row-size: 620px;
   --input-width: 480px;
+  --engine-icon-gap: 16px;
 }
 
 nav {
@@ -66,6 +67,7 @@ nav {
     --icon-size: 48px;
     --icon-row-size: 300px;
     --input-width: 200px;
+    --engine-icon-gap: 5px;
   }
 }
 </style>

@@ -4,7 +4,12 @@
       <SvgIcon :name="currentEngine.icon" size="24px"></SvgIcon>
       <SvgIcon name="Down" size="12px"></SvgIcon>
     </div>
-    <input id="search-input" class="scrub-backgound" type="search" @keydown="submitSearch" @input="getSuggests">
+    <div id="search-input">
+      <input type="search" class="scrub-backgound" @keydown="submitSearch" @input="getSuggests" placeholder="输入搜索内容" required>
+      <i @click="clearInput">
+        <SvgIcon name="Clear" size="30px"/>
+      </i>
+    </div>
     <div id="search-button" class="row-center scrub-backgound" @click="directSearch">
       <SvgIcon name="Magnifier" size="24px"/>
     </div>
@@ -53,6 +58,18 @@ export default class SearchBox extends Vue {
     this.enginesData.currentEngineIndex = index
     localStorage.setItem('enginesData', JSON.stringify(this.enginesData))
     this.showEngines = false
+  }
+
+  clearInput () {
+    const div = document.getElementById('search-input')
+    if (!div) return
+
+    const inputs = div.getElementsByTagName('input')
+    if (!inputs.length) return
+
+    const input = (inputs[0] as HTMLInputElement)
+    input.value = ''
+    input.focus()
   }
 
   mounted (): void {
@@ -140,7 +157,6 @@ export default class SearchBox extends Vue {
         this.toggleSuggests(target.value.length !== 0)
       }
     })
-    // jsonpCallback: 'cb' // 默认callback，改为cb
   }
 }
 </script>
@@ -150,7 +166,7 @@ export default class SearchBox extends Vue {
   position: relative;
   display: flex;
   --input-height: 3.5em;
-  --engine-box-width: 54px;
+  --engine-box-width: 50px;
   --input-radius: 1.25em;
   height: var(--input-height);
 
@@ -160,6 +176,10 @@ export default class SearchBox extends Vue {
   }
 }
 
+#search-input {
+  position: relative;
+}
+
 input {
   top: 0;
   width: var(--input-width);
@@ -167,10 +187,38 @@ input {
   border-left: none;
   border-right: none;
   color: white;
+  height: 100%;
+
+  &::-webkit-search-cancel-button {
+    display: none;
+  }
+
+  &:valid + i {
+    scale: 1;
+    opacity: 1;
+  }
+}
+
+i {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 30px;
+  height: 30px;
+  transform: translateY(-50%);
+  color: gray;
+  cursor: pointer;
+  scale: 0;
+  opacity: 0;
+  transform-origin: 50% 0;
+  transition-property: opacity, scale;
+  transition-duration: .2s;
+  transition-timing-function: ease-out;
 }
 
 #engine-select {
   cursor: pointer;
+  user-select: none;
   width: var(--engine-box-width);
   padding-left: 10px;
   border-right: none;
@@ -184,6 +232,7 @@ input {
 
 #search-button {
   cursor: pointer;
+  user-select: none;
   border-left: none;
   width: var(--engine-box-width);
   border-radius: 0 var(--input-radius) var(--input-radius) 0;
