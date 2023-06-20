@@ -1,0 +1,37 @@
+{
+
+  "manifest_version": 3,
+  "name": "Vua New Tab",
+  "version": "1.0.0",
+
+  "description": "Simple new TAB page.",
+
+  "icons": {
+    "32": "icons/vua-32.png",
+    "48": "icons/vua-48.png",
+    "96": "icons/vua-96.png",
+    "128": "icons/vua-128.png"
+  },
+
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+
+  "host_permissions": [
+    "*://*/*"
+  ],
+
+  "declarative_net_request": {
+    "rule_resources": [{
+      "id": "sample_rules",
+      "enabled": true,
+      "path": "sample_rules.json"
+    }]
+  },
+
+  "permissions": [
+    "storage", "declarativeNetRequest", "declarativeNetRequestFeedback",
+    "http://suggestqueries.google.com/"
+  ]
+
+}

@@ -1,11 +1,46 @@
 const { defineConfig } = require('@vue/cli-service')
-const path = require('path');
+const path = require('path')
+const CopyWebpackPlugin = require("copy-webpack-plugin")
 function resolve (dir) {
   return path.join(__dirname, dir)
 }
 
+const copyFiles = [
+  {
+    from: path.resolve('target/chromium/manifest.json'),
+    to: `${path.resolve('dist')}/manifest.json`
+  },
+  {
+    from: path.resolve('target/shared/icons'),
+    to: `${path.resolve('dist')}/icons`
+  },
+  {
+    from: path.resolve('target/shared/sample_rules.json'),
+    to: `${path.resolve('dist')}/sample_rules.json`
+  },
+]
+
+// 复制插件
+const plugins = [
+   new CopyWebpackPlugin({
+     patterns: copyFiles
+   })
+];
+
+// 页面文件
+// const pages = {
+//   'app': {
+//     entry: "src/main.ts",
+//     template: 'public/index.html',
+//     filename: 'app.html'
+//   }
+// };
+
 module.exports = defineConfig({
-  publicPath: '/vua/',
+  configureWebpack: {
+    plugins
+  },
+  publicPath: '/',
   // assetsPublicPath: './',
   transpileDependencies: true,
   chainWebpack: config => {

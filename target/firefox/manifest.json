@@ -1,0 +1,26 @@
+{
+
+  "manifest_version": 2,
+  "name": "Vua New Tab",
+  "version": "1.0.0",
+
+  "description": "Simple new TAB page.",
+
+  "icons": {
+    "32": "icons/vua-32.png",
+    "48": "icons/vua-48.png",
+    "96": "icons/vua-96.png",
+    "128": "icons/vua-128.png"
+  },
+
+  "chrome_settings_overrides": {
+    "homepage": "index.html"
+  },
+
+  "chrome_url_overrides": {
+    "newtab": "index.html"
+  },
+
+  "permissions": ["storage"]
+
+}

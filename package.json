@@ -8,7 +8,9 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@types/chrome": "^0.0.237",
     "axios": "^1.4.0",
+    "copy-webpack-plugin": "^11.0.0",
     "core-js": "^3.8.3",
     "fetch-jsonp": "^1.2.3",
     "jsqr": "^1.4.0",

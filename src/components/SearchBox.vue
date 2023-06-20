@@ -152,6 +152,7 @@ export default class SearchBox extends Vue {
       case 'Tab':
         this.shiftEngine(!event.shiftKey)
         document.getElementById('search-input')?.focus()
+        this.getSuggests(event)
         event.preventDefault()
         break
       default:

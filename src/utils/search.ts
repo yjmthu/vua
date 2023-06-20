@@ -1,6 +1,5 @@
 import axios from 'axios'
-import fetchJSONP from 'fetch-jsonp'
-// import axios from 'axios'
+// import fetchJSONP from 'fetch-jsonp'
 
 interface EngineData {
   name: string
@@ -9,39 +8,56 @@ interface EngineData {
   getSuggests: (arg0: string, arg1: (data: string[]) => void) => void
 }
 
-function baiduSuggests (text: string, callback: (data: string[]) => void) {
-  fetchJSONP(`http://suggestion.baidu.com/su?wd=${text}`, {
-    // https://ac.duckduckgo.com/ac/?q=foobar&type=list&callback=jsonCallback&_=1600956892202
-    // http://suggestion.baidu.com/su?wd=#content#&cb=window.baidu.sug
-    jsonpCallback: 'cb' // 默认callback，改为cb
-  })
-    .then(response => response.json())
-    .then(data => {
-      const result: string[] = data.s
-      callback(result)
-    })
-}
+// function baiduSuggests (text: string, callback: (data: string[]) => void) {
+//   fetchJSONP(`https://suggestion.baidu.com/su?wd=${text}`, {
+//     // https://ac.duckduckgo.com/ac/?q=foobar&type=list&callback=jsonCallback&_=1600956892202
+//     // http://suggestion.baidu.com/su?wd=#content#&cb=window.baidu.sug
+//     jsonpCallback: 'cb' // 默认callback，改为cb
+//   })
+//     .then(response => response.json())
+//     .then(data => {
+//       const result: string[] = data.s
+//       callback(result)
+//     })
+// }
 
 const engines: EngineData[] = [
   {
     name: '必应',
     icon: 'Bing',
     url: 'https://www.bing.com/search?q=',
+    // getSuggests: (text, callback) => {
+    //   fetchJSONP(`https://api.bing.com/qsonhs.aspx?type=cb&q=${text}`, {
+    //     jsonpCallback: 'cb' // 默认callback，改为cb
+    //   })
+    //     .then(response => response.json())
+    //     .then(data => {
+    //       const theAS = data.AS
+    //       const result: string[] = []
+    //       if (!theAS.FullResults) return
+    //       for (const i of theAS.Results) {
+    //         for (const j of i.Suggests) {
+    //           result.push(j.Txt)
+    //         }
+    //       }
+    //       callback(result)
+    //     })
+    // }
     getSuggests: (text, callback) => {
-      fetchJSONP(`https://api.bing.com/qsonhs.aspx?type=cb&q=${text}`, {
-        jsonpCallback: 'cb' // 默认callback，改为cb
-      })
-        .then(response => response.json())
-        .then(data => {
-          const theAS = data.AS
+      axios.get(`https://api.bing.com/qsonhs.aspx?q=${text}`)
+        .then(response => {
+          const theAS = response?.data?.AS
+          if (!theAS || !theAS.FullResults) return
+
           const result: string[] = []
-          if (!theAS.FullResults) return
           for (const i of theAS.Results) {
             for (const j of i.Suggests) {
               result.push(j.Txt)
             }
           }
           callback(result)
+        }, error => {
+          console.log('Bing Suggests Error:', error.message)
         })
     }
   },
@@ -49,18 +65,28 @@ const engines: EngineData[] = [
     name: 'Google',
     icon: 'Google',
     url: 'https://www.google.com/search?q=',
+    // getSuggests: (text, callback) => {
+    //   fetchJSONP(`https://suggestqueries.google.com/complete/search?client=youtube&q=${text}`, {
+    //     jsonpCallback: 'jsonp' // 默认callback，改为cb
+    //   })
+    //     .then(response => response.json())
+    //     .then(data => {
+    //       const result: string[] = []
+    //       if (data.length < 2 || !data[1].length) return
+    //       for (const i of data[1]) {
+    //         result.push(i[0])
+    //       }
+    //       callback(result)
+    //     })
+    // }
     getSuggests: (text, callback) => {
-      fetchJSONP(`http://suggestqueries.google.com/complete/search?client=youtube&q=${text}`, {
-        jsonpCallback: 'jsonp' // 默认callback，改为cb
-      })
-        .then(response => response.json())
-        .then(data => {
-          const result: string[] = []
-          if (data.length < 2 || !data[1].length) return
-          for (const i of data[1]) {
-            result.push(i[0])
-          }
-          callback(result)
+      axios.get(`https://suggestqueries.google.com/complete/search?client=chrome&q=${text}`)
+        .then(response => {
+          const data = response?.data
+          if (!data || data.length < 2 || !data[1].length) return
+          callback(data[1])
+        }, error => {
+          console.log('Google Suggests Error:', error.message)
         })
     }
   },
@@ -87,7 +113,17 @@ const engines: EngineData[] = [
     name: 'Baidu',
     icon: 'Baidu',
     url: 'https://www.baidu.com/s?wd=',
-    getSuggests: baiduSuggests
+    // getSuggests: baiduSuggests
+    getSuggests (text, callback) {
+      axios.get(`https://suggestion.baidu.com/su?action=opensearch&wd=${text}`)
+        .then(response => {
+          const data = response?.data[1]
+          if (!data) return
+          callback(data)
+        }, error => {
+          console.log('Baidu Suggests Error:', error.message)
+        })
+    }
   },
   {
     name: '小红书',
@@ -166,20 +202,34 @@ const engines: EngineData[] = [
     name: 'Wikipedia',
     icon: 'Wikipedia',
     url: 'https://en.wikipedia.org/wiki/Special:Search?search=',
+    // getSuggests: (text, callback) => {
+    //   fetchJSONP(`https://en.wikipedia.org/w/api.php?format=json&action=query&generator=search&gsrsearch=${text}`, {
+    //     jsonpCallback: 'callback' // 默认callback，改为cb
+    //   })
+    //     .then(response => response.json())
+    //     .then(data => {
+    //       const result: string[] = []
+    //       data = data.query
+    //       if (!data || !data.pages) return
+    //       data = data.pages
+    //       for (const i in data) {
+    //         result.push(data[i].title)
+    //       }
+    //       callback(result)
+    //     })
+    // }
     getSuggests: (text, callback) => {
-      fetchJSONP(`https://en.wikipedia.org/w/api.php?format=json&action=query&generator=search&gsrsearch=${text}`, {
-        jsonpCallback: 'callback' // 默认callback，改为cb
-      })
-        .then(response => response.json())
-        .then(data => {
+      axios.get(`https://en.wikipedia.org/w/api.php?format=json&action=query&generator=search&gsrsearch=${text}`)
+        .then(response => {
           const result: string[] = []
-          data = data.query
-          if (!data || !data.pages) return
-          data = data.pages
+          const data = response?.data?.query?.pages
+          if (!data) return
           for (const i in data) {
             result.push(data[i].title)
           }
           callback(result)
+        }, error => {
+          console.log('Wikipedia Suggests Error:', error.message)
         })
     }
   },
