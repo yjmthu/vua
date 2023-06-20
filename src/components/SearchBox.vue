@@ -60,6 +60,23 @@ export default class SearchBox extends Vue {
     this.showEngines = false
   }
 
+  shiftEngine (forward: boolean) {
+    if (forward) {
+      if (this.enginesData.currentEngineIndex + 1 >= engines.length) {
+        this.enginesData.currentEngineIndex = 0
+      } else {
+        ++this.enginesData.currentEngineIndex
+      }
+    } else {
+      if (this.enginesData.currentEngineIndex === 0) {
+        this.enginesData.currentEngineIndex = engines.length - 1
+      } else {
+        --this.enginesData.currentEngineIndex
+      }
+    }
+    localStorage.setItem('enginesData', JSON.stringify(this.enginesData))
+  }
+
   clearInput () {
     const input = document.getElementById('search-input') as HTMLInputElement | null
     if (!input) return
@@ -133,6 +150,9 @@ export default class SearchBox extends Vue {
         }
         break
       case 'Tab':
+        this.shiftEngine(!event.shiftKey)
+        document.getElementById('search-input')?.focus()
+        event.preventDefault()
         break
       default:
         // console.log(event.key)
