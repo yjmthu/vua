@@ -4,8 +4,8 @@
       <SvgIcon :name="currentEngine.icon" size="24px"></SvgIcon>
       <SvgIcon name="Down" size="12px"></SvgIcon>
     </div>
-    <div id="search-input">
-      <input type="search" class="scrub-backgound" @keydown="submitSearch" @input="getSuggests" placeholder="输入搜索内容" required>
+    <div id="search-input-box">
+      <input id="search-input" type="search" class="scrub-backgound" @keydown="submitSearch" @input="getSuggests" placeholder="输入搜索内容" required>
       <i @click="clearInput">
         <SvgIcon name="Clear" size="30px"/>
       </i>
@@ -61,13 +61,9 @@ export default class SearchBox extends Vue {
   }
 
   clearInput () {
-    const div = document.getElementById('search-input')
-    if (!div) return
+    const input = document.getElementById('search-input') as HTMLInputElement | null
+    if (!input) return
 
-    const inputs = div.getElementsByTagName('input')
-    if (!inputs.length) return
-
-    const input = (inputs[0] as HTMLInputElement)
     input.value = ''
     input.focus()
   }
@@ -136,6 +132,8 @@ export default class SearchBox extends Vue {
           target.value = this.suggests[this.selected]
         }
         break
+      case 'Tab':
+        break
       default:
         // console.log(event.key)
         break
@@ -176,11 +174,11 @@ export default class SearchBox extends Vue {
   }
 }
 
-#search-input {
+#search-input-box {
   position: relative;
 }
 
-input {
+#search-input {
   top: 0;
   width: var(--input-width);
   padding: 1em;
