@@ -106,7 +106,7 @@ export default class CodeScan extends Vue {
         // 识别二维码
         code = jsQR(imageData.data, imageData.width, imageData.height)
       } catch (e) {
-        console.error(e)
+        console.log('scan error: ', e)
       }
       // 如果识别出二维码，绘制矩形框
       if (code) {

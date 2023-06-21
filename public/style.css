@@ -39,6 +39,14 @@ html, body {
   align-items: center;
 }
 
+.show-pop-y {
+  transform: scaleY(1);
+}
+
+.hide-pop-y {
+  transform: scaleY(0);
+}
+
 /* Designing for scroll-bar */
 ::-webkit-scrollbar {
   width: 2px;

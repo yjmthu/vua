@@ -73,11 +73,11 @@ a {
   font-size: 12px;
   color: white;
   display: flex;
-  // justify-content: center;
   align-items: center;
   gap: 4px;
   flex-direction: column;
-  // vertical-align: middle;
+
+  width: var(--icon-size)
 }
 
 img {
@@ -89,6 +89,7 @@ img {
 
 ul {
   position: absolute;
+  user-select: none;
   padding-left: 0;
   top: 100%;
   left: 50%;

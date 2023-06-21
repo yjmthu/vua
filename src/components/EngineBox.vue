@@ -42,6 +42,9 @@ div {
   // background-color: bisque;
   top: 110%;
   width: 100%;
+  transform-origin: left top;
+  transition-property: transform;
+  transition-duration: .2s;
 }
 
 ul {
@@ -55,6 +58,7 @@ li {
   list-style: none;
   padding: 8px 12px;
   border-radius: 10px;
+  width: var(--icon-size);
   &:hover {
     background-color: #16171952;
   }

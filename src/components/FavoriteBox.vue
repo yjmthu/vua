@@ -5,6 +5,7 @@
       <SvgIcon name="Trash" size="30px" @click="toggleMode('delete')"/>
       <SvgIcon name="PlusSmall" size="30px" @click="enableBookmarkEdit"/>
       <SvgIcon name="ViewfinderCircle" size="30px" @click="$router.push({path: 'scan'})"/>
+      <a href="https://yjmthu.github.io/vua/vua.crx" target="_blank"><SvgIcon name="Extension" size="30px"/></a>
     </nav>
     <ul ref="favorite-list" :style="{'--visible': mode !== 'normal' ? 'block' : 'none'}">
       <li v-for="(data, index) in favoriteData" :key="index" :href="data.url" :index="index">
@@ -151,18 +152,30 @@ nav {
   border-bottom: solid 1px blue;
   color: white;
 
+  * {
+    box-sizing: border-box;
+  }
   & > * {
     position: relative;
-    box-sizing: border-box;
 
     background-color: transparent;
     border-radius: 6px;
-    padding: 4px 6px;
-    margin: 2px;
     cursor: pointer;
     &:hover {
       background-color: darkgray;
     }
+  }
+
+  svg {
+    padding: 4px 6px;
+  }
+
+  a {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    color: white;
+    text-decoration: none;
   }
 }
 

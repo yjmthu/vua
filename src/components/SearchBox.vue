@@ -14,7 +14,7 @@
       <SvgIcon name="Magnifier" size="24px"/>
     </div>
     <SuggestBox :suggests="suggests" :selected="selected" v-show="focused"/>
-    <EngineBox v-if="showEngines" :currentEngineIndex=enginesData.currentEngineIndex @setEngineIndex="setEngineIndex"></EngineBox>
+    <EngineBox :class="`${showEngines ? 'show':'hide'}-pop-y`" :currentEngineIndex=enginesData.currentEngineIndex @setEngineIndex="setEngineIndex"></EngineBox>
   </div>
 </template>
 

@@ -5,11 +5,27 @@ function resolve (dir) {
   return path.join(__dirname, dir)
 }
 
-const copyFiles = [
+const useFirefox = false
+
+const firefoxFiles = [
+  {
+    from: path.resolve('target/firefox/manifest.json'),
+    to: `${path.resolve('dist')}/manifest.json`
+  },
+  {
+    from: path.resolve('target/firefox/background.js'),
+    to: `${path.resolve('dist')}/background.js`
+  },
+]
+
+const chromiumFiles = [
   {
     from: path.resolve('target/chromium/manifest.json'),
     to: `${path.resolve('dist')}/manifest.json`
   },
+]
+
+const copyFiles = [
   {
     from: path.resolve('target/shared/icons'),
     to: `${path.resolve('dist')}/icons`
@@ -18,7 +34,7 @@ const copyFiles = [
   //   from: path.resolve('target/shared/sample_rules.json'),
   //   to: `${path.resolve('dist')}/sample_rules.json`
   // },
-]
+].concat(useFirefox ? firefoxFiles: chromiumFiles)
 
 // 复制插件
 const plugins = [
