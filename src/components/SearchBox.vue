@@ -122,7 +122,14 @@ export default class SearchBox extends Vue {
   submitSearch (event: KeyboardEvent) {
     if (!event.target) return
     const target = event.target as HTMLInputElement
-    if (target.value.length === 0) return
+    if (event.key === 'Tab') {
+      this.shiftEngine(!event.shiftKey)
+      this.getSuggests(target)
+      event.preventDefault()
+    }
+    if (target.value.length === 0) {
+      return
+    }
     switch (event.key) {
       case 'Enter':
         if (this.selected !== -1 && this.selected < this.suggests.length) {
@@ -150,11 +157,6 @@ export default class SearchBox extends Vue {
           }
           target.value = this.suggests[this.selected]
         }
-        break
-      case 'Tab':
-        this.shiftEngine(!event.shiftKey)
-        this.getSuggests(target)
-        event.preventDefault()
         break
       default:
         // console.log(event.key)

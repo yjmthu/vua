@@ -1,8 +1,8 @@
 import axios from 'axios'
 import fetchJSONP from 'fetch-jsonp'
 
-// const forbidCors = true
-const forbidCors = false
+const forbidCors = true
+// const forbidCors = false
 
 /* eslint-disable */
 

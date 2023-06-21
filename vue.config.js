@@ -56,7 +56,7 @@ module.exports = defineConfig({
   configureWebpack: {
     plugins
   },
-  publicPath: '/',
+  publicPath: './',
   // assetsPublicPath: './',
   transpileDependencies: true,
   chainWebpack: config => {
