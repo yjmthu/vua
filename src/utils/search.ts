@@ -126,9 +126,9 @@ const engines: EngineData[] = [
     }
   },
   {
-    name: '小红书',
-    icon: 'RedBook',
-    url: 'https://www.xiaohongshu.com/search_result?keyword=',
+    name: '新必应',
+    icon: 'AI',
+    url: 'https://www.bing.com/search?iscopilotedu=1&form=MA13G9&showconv=1&q=',
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
       axios.get(`https://edith.xiaohongshu.com/api/sns/web/v1/sug/recommend?keyword=${text}`)
         .then(response => {
