@@ -1,8 +1,11 @@
 import axios from 'axios'
 import fetchJSONP from 'fetch-jsonp'
 
-const forbidCors = true
-// const forbidCors = false
+// Whether to prohibit cross-domain.
+// const forbidCors = true
+const forbidCors = false
+
+let controller: AbortController | undefined
 
 /* eslint-disable */
 
@@ -46,7 +49,9 @@ const engines: EngineData[] = [
           callback(result)
         })
     } : (text, callback) => {
-      axios.get(`https://api.bing.com/qsonhs.aspx?q=${text}`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://api.bing.com/qsonhs.aspx?q=${text}`, { signal: controller.signal })
         .then(response => {
           const theAS = response?.data?.AS
           if (!theAS || !theAS.FullResults) return
@@ -81,7 +86,9 @@ const engines: EngineData[] = [
           callback(result)
         })
     } : (text, callback) => {
-      axios.get(`https://suggestqueries.google.com/complete/search?client=chrome&q=${text}`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://suggestqueries.google.com/complete/search?client=chrome&q=${text}`, { signal: controller.signal })
         .then(response => {
           const data = response?.data
           if (!data || data.length < 2 || !data[1].length) return
@@ -97,7 +104,9 @@ const engines: EngineData[] = [
     url: 'https://duckduckgo.com/?q=',
     // getSuggests: baiduSuggests
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
-      axios.get(`https://duckduckgo.com/ac/?q=${text}&kl=wt-wt`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://duckduckgo.com/ac/?q=${text}&kl=wt-wt`, { signal: controller.signal })
         .then(response => {
           const data = response.data
           const result: string[] = []
@@ -115,7 +124,9 @@ const engines: EngineData[] = [
     icon: 'Baidu',
     url: 'https://www.baidu.com/s?wd=',
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
-      axios.get(`https://suggestion.baidu.com/su?action=opensearch&wd=${text}`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://suggestion.baidu.com/su?action=opensearch&wd=${text}`, { signal: controller.signal })
         .then(response => {
           const data = response?.data[1]
           if (!data) return
@@ -130,7 +141,9 @@ const engines: EngineData[] = [
     icon: 'AI',
     url: 'https://www.bing.com/search?iscopilotedu=1&form=MA13G9&showconv=1&q=',
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
-      axios.get(`https://edith.xiaohongshu.com/api/sns/web/v1/sug/recommend?keyword=${text}`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://edith.xiaohongshu.com/api/sns/web/v1/sug/recommend?keyword=${text}`, { signal: controller.signal })
         .then(response => {
           const data = response?.data?.data?.sug_items
           if (!data) return
@@ -149,7 +162,9 @@ const engines: EngineData[] = [
     icon: 'Yandex',
     url: 'https://yandex.com/search/?text=',
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
-      axios.get(`https://suggest.yandex.com/suggest-ff.cgi?part=${text}&uil=en&v=3&sn=5`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://suggest.yandex.com/suggest-ff.cgi?part=${text}&uil=en&v=3&sn=5`, { signal: controller.signal })
         .then(response => {
           const data = response.data
           if (!data || data.length < 2) return
@@ -164,7 +179,9 @@ const engines: EngineData[] = [
     icon: 'Qwant',
     url: 'https://www.qwant.com/?q=',
     getSuggests: (text, callback) => {
-      axios.get(`https://api.qwant.com/v3/suggest?q=${text}&locale=en_US&version=2`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://api.qwant.com/v3/suggest?q=${text}&locale=en_US&version=2`, { signal: controller.signal })
         .then(response => {
           const data = response.data.data.items
           if (!data) return
@@ -183,7 +200,9 @@ const engines: EngineData[] = [
     icon: 'ZhiHu',
     url: 'https://www.zhihu.com/search?type=content&q=',
     getSuggests: (text, callback) => {
-      axios.get(`https://www.zhihu.com/api/v4/search/suggest?q=${text}`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://www.zhihu.com/api/v4/search/suggest?q=${text}`, { signal: controller.signal })
         .then(response => {
           const data = response.data.suggest
           const result: string[] = []
@@ -216,7 +235,9 @@ const engines: EngineData[] = [
           callback(result)
         })
     } : (text, callback) => {
-      axios.get(`https://en.wikipedia.org/w/api.php?format=json&action=query&generator=search&gsrsearch=${text}`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://en.wikipedia.org/w/api.php?format=json&action=query&generator=search&gsrsearch=${text}`, { signal: controller.signal })
         .then(response => {
           const result: string[] = []
           const data = response?.data?.query?.pages
@@ -236,7 +257,9 @@ const engines: EngineData[] = [
     url: 'https://github.com/search?type=repositories&q=',
     // getSuggests: baiduSuggests // https://kaifa.baidu.com/rest/v1/recommend/suggests?wd=rust
     getSuggests: forbidCors ? baiduSuggests: (text, callback) => {
-      axios.get(`https://kaifa.baidu.com/rest/v1/recommend/suggests?wd=${text}`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://kaifa.baidu.com/rest/v1/recommend/suggests?wd=${text}`, { signal: controller.signal })
         .then(response => {
           const data = response.data.data
           if (data && data.length) callback(data)
@@ -250,7 +273,9 @@ const engines: EngineData[] = [
     icon: 'BiliBili',
     url: 'https://search.bilibili.com/all?keyword=',
     getSuggests: forbidCors ? baiduSuggests: (text, callback) => {
-      axios.get(`https://s.search.bilibili.com/main/suggest?func=suggest&suggest_type=accurate&term=${text}`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://s.search.bilibili.com/main/suggest?func=suggest&suggest_type=accurate&term=${text}`, { signal: controller.signal })
         .then(response => {
           const result: string[] = []
           const data = response.data
@@ -268,7 +293,9 @@ const engines: EngineData[] = [
     icon: 'GoogleScholar',
     url: 'https://scholar.google.com/scholar?q=',
     getSuggests: (text, callback) => {
-      axios.get(`https://scholar.google.com/scholar_complete?q=${text}`)
+      controller?.abort()
+      controller = new AbortController()
+      axios.get(`https://scholar.google.com/scholar_complete?q=${text}`, { signal: controller.signal })
         .then(response => {
           const data = response.data.l
           if (data && data.length) callback(data)
