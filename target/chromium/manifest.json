@@ -1,22 +1,17 @@
 {
-
   "manifest_version": 3,
   "name": "Vua New Tab",
   "version": "1.0.0",
-
   "description": "Simple new TAB page.",
-
   "icons": {
     "32": "icons/vua-32.png",
     "48": "icons/vua-48.png",
     "96": "icons/vua-96.png",
     "128": "icons/vua-128.png"
   },
-
   "chrome_url_overrides": {
     "newtab": "index.html"
   },
-
   "host_permissions": [
     "https://api.bing.com/*",
     "https://suggestqueries.google.com/*",
@@ -27,11 +22,13 @@
     "https://en.wikipedia.org/w/api.php*",
     "https://kaifa.baidu.com/rest/v1/recommend/suggests*",
     "https://s.search.bilibili.com/main/suggest*",
-    "https://scholar.google.com/*"
+    "https://scholar.google.com/*",
+    "https://cloud.tsinghua.edu.cn/*",
+    "<all_urls>"
   ],
-
   "permissions": [
-    "storage"
+    "storage",
+    "cookies",
+    "tabs"
   ]
-
 }

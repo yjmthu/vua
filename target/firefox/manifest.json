@@ -35,7 +35,8 @@
     "https://en.wikipedia.org/w/api.php*",
     "https://kaifa.baidu.com/rest/v1/recommend/suggests*",
     "https://s.search.bilibili.com/main/suggest*",
-    "https://scholar.google.com/*"
+    "https://scholar.google.com/*",
+    "https://*.tsinghua.edu.cn/*"
   ],
 
 

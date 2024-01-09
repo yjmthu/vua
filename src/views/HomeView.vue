@@ -4,12 +4,14 @@
     <DirectLinks/>
     <SearchBox/>
     <FavoriteBox v-show="showFavorite" @toggleVisbility="toggleFavrotite"/>
+    <SideBar></SideBar>
   </div>
 </template>
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
 // import HelloWorld from '@/components/HelloWorld.vue' // @ is an alias to /src
+import SideBar from '@/components/SideBar.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import FavoriteBox from '@/components/FavoriteBox.vue'
 import DirectLinks from '@/components/DirectLinks.vue'
@@ -18,7 +20,8 @@ import DirectLinks from '@/components/DirectLinks.vue'
   components: {
     SearchBox,
     FavoriteBox,
-    DirectLinks
+    DirectLinks,
+    SideBar
   }
 })
 export default class HomeView extends Vue {

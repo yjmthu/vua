@@ -16,6 +16,11 @@ export default class App extends Vue {
     // this.$router.push({ path: '/' })
     const app = document.getElementById('app')
     if (!app) return
+    // check if the window's width is less than 720px
+    if (window.innerWidth < 720) {
+      app.style.backgroundImage = 'url(https://cloud.tsinghua.edu.cn/f/40adf3c5aaee4fd6ac77/?dl=1)'
+      return
+    }
     const images = [
       // 'https://w.wallhaven.cc/full/9m/wallhaven-9mjoy1.png',
       'https://w.wallhaven.cc/full/v9/wallhaven-v92563.jpg',
@@ -76,7 +81,7 @@ nav {
 
 @media screen and (max-width: 720px) {
   #app {
-    background-image: url(https://cloud.tsinghua.edu.cn/f/40adf3c5aaee4fd6ac77/?dl=1);
+    // background-image: url(https://cloud.tsinghua.edu.cn/f/40adf3c5aaee4fd6ac77/?dl=1);
     --icon-size: 48px;
     --icon-row-size: 300px;
     --input-width: 200px;
