@@ -7,7 +7,10 @@
     <small>{{ currentFolder }}</small>
     <ul>
       <li v-if="folderContentStack.length !== 0" @click="goBack">..</li>
-      <li v-for="item in folderContent" :key="item.id" @click="goForward(item)">{{ item.name }}</li>
+      <li v-for="item in folderContent" :key="item.id" @click="goForward(item)">
+        <SvgIcon :name="icons[item.type]" size="16px"/>
+        <div>{{ item.name }}</div>
+      </li>
     </ul>
     <div id="sidebar-buttons">
       <button @click="login">Login</button>
@@ -33,6 +36,10 @@ interface DeployData {
   filesList: string[]
 }
 
+interface Icons {
+  [key: string]: string;
+}
+
 @Options({
   components: {
     SvgIcon
@@ -47,7 +54,14 @@ export default class SideBar extends Vue {
   folderContentStack: FolderContent[][] = []
   deployData: DeployData | null = null
 
+  icons: Icons = {
+    dir: 'Folder',
+    file: 'Document',
+    mine: 'Gift'
+  }
+
   mounted (): void {
+    /*
     chrome.storage.local.get(['deployData'], (result) => {
       if (result.deployData) {
         this.deployData = {
@@ -64,6 +78,11 @@ export default class SideBar extends Vue {
         console.log('No deploy data found.')
       }
     })
+    */
+    const data = localStorage.getItem('deployData')
+    if (!data) return
+    this.deployData = JSON.parse(data)
+    this.setWallpaper()
   }
 
   get currentFolder () {
@@ -188,13 +207,16 @@ export default class SideBar extends Vue {
       return
     }
     this.deployData = { url, filesList }
+    /*
     chrome.storage.local.set({ deployData: this.deployData }, () => {
       if (chrome.runtime.lastError) {
-        console.log(chrome.runtime.lastError)
+        alert(chrome.runtime.lastError)
       } else {
         console.log('Deploy data saved.')
       }
     })
+    */
+    localStorage.setItem('deployData', JSON.stringify(this.deployData))
     this.setWallpaper()
   }
 
@@ -304,7 +326,7 @@ ul {
 
 li {
   margin: 2px;
-  padding: 10px 20px;
+  padding: 8px 20px;
   border-radius: 6px;
   background-color: #ffffff1a;
   cursor: pointer;
@@ -314,5 +336,20 @@ li {
   }
 
   list-style-type: none;
+
+  & > * {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  div {
+    line-height: 20px;
+    padding: 2px;
+  }
+
+  svg {
+    margin-right: 6px;
+  }
+
 }
 </style>
