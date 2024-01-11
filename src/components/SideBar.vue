@@ -37,15 +37,17 @@
           <option value="newtab">新标签页</option>
           <option value="timer">定时切换</option>
         </select>
-        <h4>时间间隔</h4>
-        <!-- user can input number (range in 1~60) and choose unit here (second, minute, hour, day)-->
-        <input type="number" min="1" max="60" v-model.number="timeInterval">
-        <select v-model="scheduleIntervalUnit">
-          <option value="second">秒</option>
-          <option value="minute">分</option>
-          <option value="hour">时</option>
-          <option value="day">天</option>
-        </select>
+        <div v-if="scheduleMode === 'timer'">
+          <h4>时间间隔</h4>
+          <!-- user can input number (range in 1~60) and choose unit here (second, minute, hour, day)-->
+          <input type="number" min="1" max="60" v-model.number="timeInterval">
+          <select v-model="scheduleIntervalUnit">
+            <option value="second">秒</option>
+            <option value="minute">分</option>
+            <option value="hour">时</option>
+            <option value="day">天</option>
+          </select>
+        </div>
       </div>
     </nav>
   </aside>
