@@ -1,17 +1,36 @@
 <template>
   <aside :class="showSideBar?'show':'hide'">
-    <div id="wallpaper-button" @click="toggleSideBar">
-      <SvgIcon name="Photo" size="16px"/>
+    <div id="wallpaper-buttons">
+      <SvgIcon name="Photo" size="16px" @click="toggleSideBar"/>
+      <SvgIcon id="favoriteStar" name="Star" size="16px" @click="toggleFavorite"/>
     </div>
     <h2>Vua New Tab</h2>
+    <h3>云盘数据</h3>
     <small>{{ currentFolder }}</small>
-    <ul>
+    <ul class="text-list">
       <li v-if="folderContentStack.length !== 0" @click="goBack">..</li>
       <li v-for="item in folderContent" :key="item.id" @click="goForward(item)">
         <SvgIcon :name="icons[item.type]" size="16px"/>
         <div>{{ item.name }}</div>
       </li>
     </ul>
+    <h3>收藏预览</h3>
+    <ul class="image-list" v-if="showSideBar">
+      <li v-for="item in favoriteImageViewList" :key="item">
+        <img :src="item" alt="未能加载" width="192" height="108" @click="setFromFavorite(item)"/>
+        <!-- <div>{{ item }}</div> -->
+      </li>
+    </ul>
+    <!-- radio button to choose schedule mode -->
+    <h3>壁纸设置</h3>
+    <div>
+      <input type="radio" id="static" name="displayMode" value="static" v-model="scheduleMode">
+      <label for="static">静态壁纸</label>
+      <input type="radio" id="newtab" name="displayMode" value="newtab" v-model="scheduleMode">
+      <label for="newtab">新标签页</label>
+      <input type="radio" id="timer" name="displayMode" value="timer" v-model="scheduleMode">
+      <label for="timer">定时切换</label>
+    </div>
     <div id="sidebar-buttons">
       <button @click="login">Login</button>
       <button @click="update">Update</button>
@@ -32,12 +51,23 @@ interface FolderContent {
 }
 
 interface DeployData {
-  url: string
+  lib: string
+  thumbnail: string
   filesList: string[]
 }
 
 interface Icons {
   [key: string]: string;
+}
+
+interface ScheduleData {
+  displayMode: 'static' | 'newtab' | 'timer'
+  source: 'favorite' | 'deploy'
+  currentImage: string
+  // timestamp
+  lastChange: number
+  // in second
+  interval: number
 }
 
 @Options({
@@ -53,6 +83,15 @@ export default class SideBar extends Vue {
   currentPath: FolderContent[] = []
   folderContentStack: FolderContent[][] = []
   deployData: DeployData | null = null
+  favoriteImageList: string[] = []
+  favoriteImageViewList: string[] = []
+  scheduleData: ScheduleData = {
+    displayMode: 'static',
+    source: 'deploy',
+    currentImage: '',
+    lastChange: Math.floor(Date.now() / 1000),
+    interval: 300
+  }
 
   icons: Icons = {
     dir: 'Folder',
@@ -79,10 +118,100 @@ export default class SideBar extends Vue {
       }
     })
     */
+
+    const schedule = localStorage.getItem('scheduleData')
+    if (schedule) {
+      this.scheduleData = JSON.parse(schedule)
+    }
+
     const data = localStorage.getItem('deployData')
-    if (!data) return
-    this.deployData = JSON.parse(data)
-    this.setWallpaper()
+    if (data) {
+      this.deployData = JSON.parse(data)
+      this.startSchedule()
+    }
+    const favorite = localStorage.getItem('favoriteImageList')
+    if (favorite) {
+      this.favoriteImageList = JSON.parse(favorite)
+      this.updateViewList()
+    }
+
+    const app = document.getElementById('app')
+    if (app) {
+      const text = app.style.backgroundImage
+      this.scheduleData.currentImage = text.slice(5, text.length - 2)
+    }
+
+    // if currentBackgroundImage is in favoriteImageList, then set the star to yellow
+    const star = document.getElementById('favoriteStar')
+    if (star) {
+      if (this.isFavorite()) {
+        star.style.color = 'yellow'
+      } else {
+        star.style.color = 'inherit'
+      }
+    }
+  }
+
+  get scheduleMode () {
+    return this.scheduleData.displayMode
+  }
+
+  set scheduleMode (value: 'static' | 'newtab' | 'timer') {
+    this.scheduleMode = value
+    this.startSchedule()
+  }
+
+  startSchedule () {
+    switch (this.scheduleMode) {
+      case 'static':
+        this.setBackgroundImage(this.scheduleData.currentImage)
+        break
+      case 'newtab':
+        this.setWallpaper()
+        break
+      case 'timer': {
+        const now = Math.floor(Date.now() / 1000)
+        if (now - this.scheduleData.lastChange >= this.scheduleData.interval) {
+          this.scheduleData.lastChange = now
+          this.setWallpaper()
+        }
+        setTimeout(this.startSchedule.bind(this), (this.scheduleData.lastChange + this.scheduleData.interval - now) * 1000)
+        break
+      }
+    }
+  }
+
+  updateViewList () {
+    this.favoriteImageViewList = []
+    for (const item of this.favoriteImageList) {
+      if (!item.startsWith(this.host)) continue
+      // https://cloud.tsinghua.edu.cn/lib/6ab41ae3-06dc-483b-9606-4a55c0f9925e/file/%E6%A1%8C%E9%9D%A2%E5%A3%81%E7%BA%B8/wallhaven-kx8vmm.jpg?dl=1
+      const regex = /^https:\/\/cloud.tsinghua.edu.cn\/lib\/(.{36})\/file\/(.*)\?dl=1$/g
+      const match = regex.exec(item)
+      if (!match) continue
+      this.favoriteImageViewList.push(`${this.host}/thumbnail/${match[1]}/192/${match[2]}`)
+    }
+  }
+
+  setBackgroundImage (url: string) {
+    const app = document.getElementById('app')
+    if (!app) return
+    app.style.backgroundImage = `url(${url})`
+    this.scheduleData.currentImage = url
+    localStorage.setItem('scheduleData', JSON.stringify(this.scheduleData))
+  }
+
+  setFromFavorite (view: string) {
+    const regex = /^https:\/\/cloud.tsinghua.edu.cn\/thumbnail\/(.{36})\/192\/(.*)$/g
+    const match = regex.exec(view)
+    if (!match) return
+    const url = `${this.host}/lib/${match[1]}/file/${match[2]}?dl=1`
+    this.setBackgroundImage(url)
+
+    const star = document.getElementById('favoriteStar')
+    if (star) {
+      star.style.color = 'yellow'
+    }
   }
 
   get currentFolder () {
@@ -91,6 +220,34 @@ export default class SideBar extends Vue {
 
   toggleSideBar () {
     this.showSideBar = !this.showSideBar
+  }
+
+  toggleFavorite () {
+    if (!this.scheduleData.currentImage.length) return
+
+    // update favorite list from localStorage
+    const favorite = localStorage.getItem('favoriteImageList')
+    if (favorite) {
+      this.favoriteImageList = JSON.parse(favorite)
+    }
+
+    const star = document.getElementById('favoriteStar')
+    const index = this.favoriteImageList.indexOf(this.scheduleData.currentImage)
+    if (index === -1) {
+      this.favoriteImageList.push(this.scheduleData.currentImage)
+      if (star) star.style.color = 'yellow'
+    } else {
+      this.favoriteImageList.splice(index, 1)
+      if (star) star.style.color = 'inherit'
+    }
+
+    this.updateViewList()
+    localStorage.setItem('favoriteImageList', JSON.stringify(this.favoriteImageList))
+  }
+
+  isFavorite () {
+    if (!this.scheduleData.currentImage) return false
+    return this.favoriteImageList.indexOf(this.scheduleData.currentImage) !== -1
   }
 
   getCookies (callback: (cookies: chrome.cookies.Cookie[]) => void) {
@@ -194,8 +351,10 @@ export default class SideBar extends Vue {
       alert('请选择文件夹！')
       return
     }
-    const p = this.currentPath.map((item, index) => (index ? encodeURIComponent(item.name) : `${item.id}/file`)).join('/')
-    const url = `${this.host}/lib/${p}`
+    const pLib = this.currentPath.map((item, index) => (index ? encodeURIComponent(item.name) : `${item.id}/file`)).join('/')
+    const pThumbnail = this.currentPath.map((item, index) => (index ? encodeURIComponent(item.name) : `${item.id}/192`)).join('/')
+    const lib = `${this.host}/lib/${pLib}`
+    const thumbnail = `${this.host}/thumbnail/${pThumbnail}`
     // get all the file whose name end with ".jpg"/".png"/".jpeg"
     const filesList = this.folderContent.filter((item) => {
       if (item.type !== 'file') return false
@@ -206,7 +365,7 @@ export default class SideBar extends Vue {
       alert('该文件夹下没有图片！')
       return
     }
-    this.deployData = { url, filesList }
+    this.deployData = { lib, thumbnail, filesList }
     /*
     chrome.storage.local.set({ deployData: this.deployData }, () => {
       if (chrome.runtime.lastError) {
@@ -225,11 +384,8 @@ export default class SideBar extends Vue {
     const index = Math.floor(Math.random() * this.deployData.filesList.length)
     const file = this.deployData.filesList[index]
     console.log(file)
-    const url = `${this.deployData.url}/${encodeURIComponent(file)}?dl=1`
-    console.log(url)
-    const app = document.getElementById('app')
-    if (!app) return
-    app.style.backgroundImage = `url(${url})`
+    const url = `${this.deployData.lib}/${encodeURIComponent(file)}?dl=1`
+    this.setBackgroundImage(url)
   }
 }
 </script>
@@ -260,20 +416,29 @@ aside {
   }
 }
 
-#wallpaper-button {
+#wallpaper-buttons {
   position: absolute;
   top: 0;
   left: 100%;
   margin: 10px;
-  border-radius: 50%;
+  border-radius: 14px;
   background-color: transparent;
   color: white;
   cursor: pointer;
-  width: 28px;
+  width: 60px;
   height: 28px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 
-  & > * {
+  & > svg {
     padding: 6px;
+
+    border-radius: 14px;
+    &:hover {
+      background-color: #ffffff1a;
+    }
   }
 
   &:hover {
@@ -284,11 +449,11 @@ aside {
 
 #sidebar-buttons {
   position: absolute;
-  bottom: 20px;
+  bottom: 15px;
   left: 50%;
   transform: translateX(-50%);
 
-  padding: 20px 0;
+  padding: 0;
   display: flex;
   flex-direction: row;
   gap: 10px;
@@ -319,12 +484,17 @@ small {
 
 ul {
   padding: 4px 10px;
-  height: 400px;
+  height: 210px;
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 li {
+  list-style-type: none;
+}
+
+ul.text-list > li {
   margin: 2px;
   padding: 8px 20px;
   border-radius: 6px;
@@ -334,8 +504,6 @@ li {
   &:hover {
     background-color: #ffffff66;
   }
-
-  list-style-type: none;
 
   & > * {
     display: inline-block;
@@ -351,5 +519,22 @@ li {
     margin-right: 6px;
   }
 
+}
+
+.image-list > li {
+  cursor: pointer;
+  text-align: center;
+  padding: 2px;
+
+  &:hover {
+    background-color: #ffffff66;
+  }
+
+  img {
+    display: inline-block;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin: 2px;
+  }
 }
 </style>
