@@ -1,45 +1,59 @@
 <template>
-  <aside :class="showSideBar?'show':'hide'">
+  <aside ref="aside" :class="showSideBar? 'show' : 'hide'">
     <div id="wallpaper-buttons">
       <SvgIcon name="Photo" size="16px" @click="toggleSideBar"/>
       <SvgIcon id="favoriteStar" name="Star" size="16px" @click="toggleFavorite"/>
+      <SvgIcon name="ArrowPath" size="16px" @click="setWallpaper"/>
     </div>
-    <h2>Vua New Tab</h2>
-    <h3>云盘数据</h3>
-    <small>{{ currentFolder }}</small>
-    <ul class="text-list">
-      <li v-if="folderContentStack.length !== 0" @click="goBack">..</li>
-      <li v-for="item in folderContent" :key="item.id" @click="goForward(item)">
-        <SvgIcon :name="icons[item.type]" size="16px"/>
-        <div>{{ item.name }}</div>
-      </li>
-    </ul>
-    <h3>收藏预览</h3>
-    <ul class="image-list" v-if="showSideBar">
-      <li v-for="item in favoriteImageViewList" :key="item">
-        <img :src="item" alt="未能加载" width="192" height="108" @click="setFromFavorite(item)"/>
-        <!-- <div>{{ item }}</div> -->
-      </li>
-    </ul>
-    <!-- radio button to choose schedule mode -->
-    <h3>壁纸设置</h3>
-    <div>
-      <input type="radio" id="static" name="displayMode" value="static" v-model="scheduleMode">
-      <label for="static">静态壁纸</label>
-      <input type="radio" id="newtab" name="displayMode" value="newtab" v-model="scheduleMode">
-      <label for="newtab">新标签页</label>
-      <input type="radio" id="timer" name="displayMode" value="timer" v-model="scheduleMode">
-      <label for="timer">定时切换</label>
-    </div>
-    <div id="sidebar-buttons">
-      <button @click="login">Login</button>
-      <button @click="update">Update</button>
-      <button @click="deploy">Delpoy</button>
-    </div>
+    <nav>
+      <h2>Vua New Tab</h2>
+      <div id="sidebar-buttons">
+        <button @click="login">Login</button>
+        <button @click="update">Update</button>
+        <button @click="deploy">Delpoy</button>
+      </div>
+      <h3>云盘数据</h3>
+      <small>{{ currentFolder }}</small>
+      <ul class="text-list" v-if="folderContent.length">
+        <li v-if="folderContentStack.length !== 0" @click="goBack">..</li>
+        <li v-for="item in folderContent" :key="item.id" @click="goForward(item)">
+          <SvgIcon :name="icons[item.type]" size="16px"/>
+          <div>{{ item.name }}</div>
+        </li>
+      </ul>
+      <h3>收藏预览</h3>
+      <ul class="image-list" v-if="showSideBar">
+        <li v-for="item in favoriteImageViewList" :key="item">
+          <img :src="item" alt="未能加载" width="192" height="108" @click="setFromFavorite(item)"/>
+          <!-- <div>{{ item }}</div> -->
+        </li>
+      </ul>
+      <h3>壁纸设置</h3>
+      <div id="schedule-config">
+        <h4>自动切换模式</h4>
+        <!-- radio button to choose schedule mode -->
+        <select v-model="scheduleMode">
+          <option value="static">静态壁纸</option>
+          <option value="newtab">新标签页</option>
+          <option value="timer">定时切换</option>
+        </select>
+        <h4>时间间隔</h4>
+        <!-- user can input number (range in 1~60) and choose unit here (second, minute, hour, day)-->
+        <input type="number" min="1" max="60" v-model.number="timeInterval">
+        <select v-model="scheduleIntervalUnit">
+          <option value="second">秒</option>
+          <option value="minute">分</option>
+          <option value="hour">时</option>
+          <option value="day">天</option>
+        </select>
+      </div>
+    </nav>
   </aside>
 </template>
 
 <script lang="ts">
+// seafile api: https://download.seafile.com/published/web-api/v2.1
+
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from '@/components/SvgIcon.vue'
 import axios from 'axios'
@@ -64,10 +78,12 @@ interface ScheduleData {
   displayMode: 'static' | 'newtab' | 'timer'
   source: 'favorite' | 'deploy'
   currentImage: string
-  // timestamp
+  // timestamp in second
   lastChange: number
-  // in second
+  // interval in second
   interval: number
+  // interval unit to show
+  intervalUnit: 'second' | 'minute' | 'hour' | 'day'
 }
 
 @Options({
@@ -90,7 +106,8 @@ export default class SideBar extends Vue {
     source: 'deploy',
     currentImage: '',
     lastChange: Math.floor(Date.now() / 1000),
-    interval: 300
+    interval: 300,
+    intervalUnit: 'second'
   }
 
   icons: Icons = {
@@ -119,6 +136,13 @@ export default class SideBar extends Vue {
     })
     */
 
+    document.addEventListener('click', (event) => {
+      const aside = this.$refs.aside as HTMLElement
+      if (aside && !aside.contains(event.target as Node)) {
+        this.showSideBar = false
+      }
+    })
+
     const schedule = localStorage.getItem('scheduleData')
     if (schedule) {
       this.scheduleData = JSON.parse(schedule)
@@ -135,12 +159,17 @@ export default class SideBar extends Vue {
       this.updateViewList()
     }
 
-    const app = document.getElementById('app')
-    if (app) {
-      const text = app.style.backgroundImage
-      this.scheduleData.currentImage = text.slice(5, text.length - 2)
-    }
+    this.updateStarColor()
+  }
 
+  getCurrentBackgroundImage () {
+    const app = document.getElementById('app')
+    if (!app) return ''
+    const text = app.style.backgroundImage
+    return text.slice(5, text.length - 2)
+  }
+
+  updateStarColor () {
     // if currentBackgroundImage is in favoriteImageList, then set the star to yellow
     const star = document.getElementById('favoriteStar')
     if (star) {
@@ -152,19 +181,74 @@ export default class SideBar extends Vue {
     }
   }
 
+  saveScheduleData () {
+    localStorage.setItem('scheduleData', JSON.stringify(this.scheduleData))
+  }
+
   get scheduleMode () {
     return this.scheduleData.displayMode
   }
 
   set scheduleMode (value: 'static' | 'newtab' | 'timer') {
-    this.scheduleMode = value
+    this.scheduleData.displayMode = value
+    this.saveScheduleData()
+    this.startSchedule()
+  }
+
+  get scheduleIntervalUnit () {
+    return this.scheduleData.intervalUnit
+  }
+
+  set scheduleIntervalUnit (value: 'second' | 'minute' | 'hour' | 'day') {
+    this.scheduleData.intervalUnit = value
+    this.saveScheduleData()
+  }
+
+  get timeInterval () {
+    let value = this.scheduleData.interval
+    switch (this.scheduleData.intervalUnit) {
+      case 'minute':
+        value /= 60
+        break
+      case 'hour':
+        value /= 3600
+        break
+      case 'day':
+        value /= 86400
+        break
+    }
+
+    value = Math.ceil(value)
+    if (value === 0) value = 1
+    return value
+  }
+
+  set timeInterval (value: number) {
+    switch (this.scheduleIntervalUnit) {
+      case 'second':
+        this.scheduleData.interval = value
+        break
+      case 'minute':
+        this.scheduleData.interval = value * 60
+        break
+      case 'hour':
+        this.scheduleData.interval = value * 3600
+        break
+      case 'day':
+        this.scheduleData.interval = value * 86400
+        break
+      default:
+        this.scheduleData.interval = value
+    }
+    if (this.scheduleData.interval <= 30) this.scheduleData.interval = 30
+    this.saveScheduleData()
     this.startSchedule()
   }
 
   startSchedule () {
     switch (this.scheduleMode) {
       case 'static':
-        this.setBackgroundImage(this.scheduleData.currentImage)
+        this.initBackgroundImage()
         break
       case 'newtab':
         this.setWallpaper()
@@ -174,9 +258,23 @@ export default class SideBar extends Vue {
         if (now - this.scheduleData.lastChange >= this.scheduleData.interval) {
           this.scheduleData.lastChange = now
           this.setWallpaper()
+        } else {
+          this.initBackgroundImage()
         }
         setTimeout(this.startSchedule.bind(this), (this.scheduleData.lastChange + this.scheduleData.interval - now) * 1000)
         break
+      }
+    }
+  }
+
+  initBackgroundImage () {
+    const curImage = this.getCurrentBackgroundImage()
+    if (curImage !== this.scheduleData.currentImage) {
+      if (this.scheduleData.currentImage.length) {
+        this.setBackgroundImage(this.scheduleData.currentImage)
+      } else {
+        this.scheduleData.currentImage = curImage
+        this.saveScheduleData()
       }
     }
   }
@@ -198,7 +296,8 @@ export default class SideBar extends Vue {
     if (!app) return
     app.style.backgroundImage = `url(${url})`
     this.scheduleData.currentImage = url
-    localStorage.setItem('scheduleData', JSON.stringify(this.scheduleData))
+    this.updateStarColor()
+    this.saveScheduleData()
   }
 
   setFromFavorite (view: string) {
@@ -207,11 +306,6 @@ export default class SideBar extends Vue {
     if (!match) return
     const url = `${this.host}/lib/${match[1]}/file/${match[2]}?dl=1`
     this.setBackgroundImage(url)
-
-    const star = document.getElementById('favoriteStar')
-    if (star) {
-      star.style.color = 'yellow'
-    }
   }
 
   get currentFolder () {
@@ -231,15 +325,13 @@ export default class SideBar extends Vue {
       this.favoriteImageList = JSON.parse(favorite)
     }
 
-    const star = document.getElementById('favoriteStar')
     const index = this.favoriteImageList.indexOf(this.scheduleData.currentImage)
     if (index === -1) {
       this.favoriteImageList.push(this.scheduleData.currentImage)
-      if (star) star.style.color = 'yellow'
     } else {
       this.favoriteImageList.splice(index, 1)
-      if (star) star.style.color = 'inherit'
     }
+    this.updateStarColor()
 
     this.updateViewList()
     localStorage.setItem('favoriteImageList', JSON.stringify(this.favoriteImageList))
@@ -376,7 +468,7 @@ export default class SideBar extends Vue {
     })
     */
     localStorage.setItem('deployData', JSON.stringify(this.deployData))
-    this.setWallpaper()
+    this.startSchedule()
   }
 
   setWallpaper () {
@@ -391,8 +483,8 @@ export default class SideBar extends Vue {
 </script>
 
 <style scoped lang="scss">
-h2 {
-  text-align: center;
+h3 {
+  text-indent: 16px;
 }
 
 aside {
@@ -406,6 +498,7 @@ aside {
   background-color: rgba(0, 0, 0, 0.5);
 
   border-radius: 0 10px 10px 0;
+  padding: 10px 0 20px;
 
   &.show {
     left: 0;
@@ -414,6 +507,19 @@ aside {
   &.hide {
     left: calc(-1 * var(--side-bar-width));
   }
+}
+
+nav {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 0;
+}
+
+h2 {
+  position: sticky;
+  top: 0;
+  text-align: center;
 }
 
 #wallpaper-buttons {
@@ -425,7 +531,7 @@ aside {
   background-color: transparent;
   color: white;
   cursor: pointer;
-  width: 60px;
+  width: 90px;
   height: 28px;
   display: flex;
   flex-direction: row;
@@ -448,10 +554,6 @@ aside {
 }
 
 #sidebar-buttons {
-  position: absolute;
-  bottom: 15px;
-  left: 50%;
-  transform: translateX(-50%);
 
   padding: 0;
   display: flex;
@@ -466,14 +568,15 @@ aside {
 }
 
 button {
+  color: white;
   border-radius: 6px;
-  padding: 8px 16px;
-  background-color: white;
+  padding: 6px 12px;
+  background-color: rgba(0, 0, 0, 0.5);
   cursor: pointer;
   border: none;
 
   &:hover {
-    background-color: gray;
+    background-color: #ffffff1a;
   }
 }
 
@@ -488,6 +591,14 @@ ul {
   max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+#schedule-config {
+  padding: 4px 16px;
+
+  div {
+    margin: 4px 0;
+  }
 }
 
 li {
@@ -536,5 +647,42 @@ ul.text-list > li {
     vertical-align: middle;
     margin: 2px;
   }
+}
+
+select {
+  display: block;
+  padding: 6px;
+  width: 90%;
+  background-color: #ffffff1a;
+  color: inherit;
+  border-radius: 4px;
+  outline: none;
+  margin: 6px 0;
+
+  option {
+    padding: 6px 12px;
+    background-color: #46413a;
+  }
+}
+
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none !important;
+}
+
+input::-webkit-outer-spin-button{
+  -webkit-appearance: none !important;
+}
+
+input[type=number] {
+  width: 90%;
+  display: block;
+  background-color: #ffffff1a;
+  color: white;
+
+  box-sizing: border-box;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  outline: none;
+  padding: 5px 15px;
 }
 </style>
