@@ -24,7 +24,7 @@
       <h3>收藏预览</h3>
       <ul class="image-list" v-if="showSideBar">
         <li v-for="item in favoriteImageViewList" :key="item">
-          <img :src="item" :alt="getNameFromThumbnail(item)" width="192" height="108" @click="setFromFavorite(item)"/>
+          <img :src="item" :alt="getNameFromThumbnail(item)" @click="setFromFavorite(item)"/>
           <!-- <div>{{ item }}</div> -->
         </li>
       </ul>
@@ -509,7 +509,6 @@ h3 {
 }
 
 aside {
-  --side-bar-width: 240px;
   position: fixed;
   color: white;
   top: 0;
@@ -518,7 +517,7 @@ aside {
   backdrop-filter: blur(10px);
   background-color: rgba(0, 0, 0, 0.5);
 
-  border-radius: 0 10px 10px 0;
+  border-radius: 0 6px 6px 0;
   padding: 10px 0 20px;
 
   transition-property: left;
@@ -615,6 +614,10 @@ ul {
   max-height: 400px;
   overflow-y: auto;
   overflow-x: hidden;
+  &.image-list {
+    height: 400px;
+    max-height: 700px;
+  }
 }
 
 #schedule-config {
@@ -656,7 +659,7 @@ ul.text-list > li {
 
 }
 
-.image-list > li {
+ul.image-list > li {
   cursor: pointer;
   text-align: center;
   padding: 2px;
@@ -667,6 +670,8 @@ ul.text-list > li {
 
   img {
     display: inline-block;
+    width: var(--side-bar-image-width);
+    height: var(--side-bar-image-height);
     border-radius: 4px;
     vertical-align: middle;
     margin: 2px;

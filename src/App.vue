@@ -64,6 +64,9 @@ export default class App extends Vue {
   --icon-row-size: 620px;
   --input-width: 480px;
   --engine-icon-gap: 18px;
+  --side-bar-width: 300px;
+  --side-bar-image-width: 256px;
+  --side-bar-image-height: 144px;
 }
 
 nav {
@@ -81,11 +84,13 @@ nav {
 
 @media screen and (max-width: 720px) {
   #app {
-    // background-image: url(https://cloud.tsinghua.edu.cn/f/40adf3c5aaee4fd6ac77/?dl=1);
     --icon-size: 48px;
     --icon-row-size: 300px;
     --input-width: 200px;
     --engine-icon-gap: 1px;
+    --side-bar-width: 240px;
+    --side-bar-image-width: 192px;
+    --side-bar-image-height: 288px;
   }
 }
 </style>
