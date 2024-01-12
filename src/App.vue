@@ -18,22 +18,17 @@ export default class App extends Vue {
     if (!app) return
     // check if the window's width is less than 720px
     if (window.innerWidth < 720) {
-      app.style.backgroundImage = 'url(https://cloud.tsinghua.edu.cn/f/40adf3c5aaee4fd6ac77/?dl=1)'
+      app.style.backgroundImage = 'url(https://cloud.tsinghua.edu.cn/f/fa29af52426942c88ba5/?dl=1)'
       return
     }
     const images = [
-      // 'https://w.wallhaven.cc/full/9m/wallhaven-9mjoy1.png',
-      'https://w.wallhaven.cc/full/v9/wallhaven-v92563.jpg',
-      'https://w.wallhaven.cc/full/7p/wallhaven-7pm73y.png',
-      'https://w.wallhaven.cc/full/9d/wallhaven-9dep2k.png',
-      'https://w.wallhaven.cc/full/yx/wallhaven-yxwoml.jpg',
-      'https://w.wallhaven.cc/full/jx/wallhaven-jxr75p.png',
-      'https://w.wallhaven.cc/full/3l/wallhaven-3lg8g9.jpg',
-      'https://w.wallhaven.cc/full/m3/wallhaven-m3r6w1.jpg',
-      'https://w.wallhaven.cc/full/3z/wallhaven-3z87dv.jpg',
-      'https://w.wallhaven.cc/full/k7/wallhaven-k7jyom.jpg',
-      'https://w.wallhaven.cc/full/1k/wallhaven-1kqd71.jpg',
-      'https://w.wallhaven.cc/full/9m/wallhaven-9mkgr1.png'
+      'https://cloud.tsinghua.edu.cn/f/805e90f9963d4547985a/?dl=1',
+      'https://cloud.tsinghua.edu.cn/f/2d9fabd26a7b4163b770/?dl=1',
+      'https://cloud.tsinghua.edu.cn/f/cdf726e5d5e44a85982e/?dl=1',
+      'https://cloud.tsinghua.edu.cn/f/014e257f8d4d428b98f6/?dl=1',
+      'https://cloud.tsinghua.edu.cn/f/80eb15b257574159a9e4/?dl=1',
+      'https://cloud.tsinghua.edu.cn/f/9f9b4899305f40cf8d6a/?dl=1',
+      'https://cloud.tsinghua.edu.cn/f/542dd08d0a3f40a39970/?dl=1'
     ]
     const random = Math.floor(Math.random() * images.length)
     app.style.backgroundImage = `url(${images[random]})`
