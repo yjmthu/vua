@@ -514,6 +514,10 @@ aside {
   border-radius: 0 10px 10px 0;
   padding: 10px 0 20px;
 
+  transition-property: left;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
+
   &.show {
     left: 0;
   }
