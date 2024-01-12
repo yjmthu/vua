@@ -12,27 +12,6 @@ import HomeView from './views/HomeView.vue'
   }
 })
 export default class App extends Vue {
-  mounted (): void {
-    // this.$router.push({ path: '/' })
-    const app = document.getElementById('app')
-    if (!app) return
-    // check if the window's width is less than 720px
-    if (window.innerWidth < 720) {
-      app.style.backgroundImage = 'url(https://cloud.tsinghua.edu.cn/f/fa29af52426942c88ba5/?dl=1)'
-      return
-    }
-    const images = [
-      'https://cloud.tsinghua.edu.cn/f/805e90f9963d4547985a/?dl=1',
-      'https://cloud.tsinghua.edu.cn/f/2d9fabd26a7b4163b770/?dl=1',
-      'https://cloud.tsinghua.edu.cn/f/cdf726e5d5e44a85982e/?dl=1',
-      'https://cloud.tsinghua.edu.cn/f/014e257f8d4d428b98f6/?dl=1',
-      'https://cloud.tsinghua.edu.cn/f/80eb15b257574159a9e4/?dl=1',
-      'https://cloud.tsinghua.edu.cn/f/9f9b4899305f40cf8d6a/?dl=1',
-      'https://cloud.tsinghua.edu.cn/f/542dd08d0a3f40a39970/?dl=1'
-    ]
-    const random = Math.floor(Math.random() * images.length)
-    app.style.backgroundImage = `url(${images[random]})`
-  }
 }
 </script>
 

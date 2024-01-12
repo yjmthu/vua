@@ -8,10 +8,10 @@
     <nav>
       <h2>Vua New Tab</h2>
       <div id="sidebar-buttons">
-        <button @click="login">Login</button>
-        <button @click="update">Update</button>
-        <button @click="deploy">Delpoy</button>
-        <button @click="config">Storage</button>
+        <button @click="login">登录</button>
+        <button @click="update">刷新</button>
+        <button @click="deploy">部署</button>
+        <button @click="config">书签</button>
       </div>
       <h3>云盘数据</h3>
       <small>{{ currentFolder }}</small>
@@ -49,6 +49,11 @@
             <option value="day">天</option>
           </select>
         </div>
+        <h4>壁纸来源</h4>
+        <select v-model="scheduleSource">
+          <option value="favorite">收藏</option>
+          <option value="deploy">部署</option>
+        </select>
       </div>
     </nav>
   </aside>
@@ -90,6 +95,22 @@ interface ScheduleData {
   intervalUnit: 'second' | 'minute' | 'hour' | 'day'
 }
 
+function getFavoriteImageList () {
+  let images = ['fa29af52426942c88ba5']
+  if (window.innerWidth >= 720) {
+    images = [
+      '805e90f9963d4547985a',
+      '2d9fabd26a7b4163b770',
+      'cdf726e5d5e44a85982e',
+      '014e257f8d4d428b98f6',
+      '80eb15b257574159a9e4',
+      '9f9b4899305f40cf8d6a',
+      '542dd08d0a3f40a39970'
+    ]
+  }
+  return images.map((item) => `https://cloud.tsinghua.edu.cn/f/${item}/?dl=1`)
+}
+
 @Options({
   components: {
     SvgIcon
@@ -108,7 +129,7 @@ export default class SideBar extends Vue {
   timerId: number | null = null
   scheduleData: ScheduleData = {
     displayMode: 'static',
-    source: 'deploy',
+    source: 'favorite',
     currentImage: '',
     lastChange: Math.floor(Date.now() / 1000),
     interval: 300,
@@ -164,6 +185,9 @@ export default class SideBar extends Vue {
     if (favorite) {
       this.favoriteImageList = JSON.parse(favorite)
       this.updateViewList()
+    } else {
+      this.favoriteImageList = getFavoriteImageList()
+      localStorage.setItem('favoriteImageList', JSON.stringify(this.favoriteImageList))
     }
 
     this.updateStarColor()
@@ -195,6 +219,22 @@ export default class SideBar extends Vue {
 
   saveScheduleData () {
     localStorage.setItem('scheduleData', JSON.stringify(this.scheduleData))
+  }
+
+  get scheduleSource () {
+    return this.scheduleData.source
+  }
+
+  set scheduleSource (value: 'favorite' | 'deploy') {
+    // check if is chrome extention or pure website
+    if (!chrome.runtime) {
+      this.scheduleData.source = value
+      alert('请使用 Chrome 扩展！')
+      return
+    }
+    this.scheduleData.source = value
+    this.saveScheduleData()
+    this.startSchedule()
   }
 
   get scheduleMode () {
@@ -521,11 +561,23 @@ export default class SideBar extends Vue {
   }
 
   setWallpaper () {
-    if (!this.deployData) return
-    const index = Math.floor(Math.random() * this.deployData.filesList.length)
-    const file = this.deployData.filesList[index]
-    console.log(file)
-    const url = `${this.deployData.lib}/${encodeURIComponent(file)}?dl=1`
+    let list = []
+    switch (this.scheduleSource) {
+      case 'favorite':
+        list = this.favoriteImageList
+        break
+      case 'deploy':
+        if (!this.deployData) return
+        list = this.deployData.filesList
+        break
+    }
+    if (list.length === 0) return
+    const index = Math.floor(Math.random() * list.length)
+    let url = list[index]
+    if (this.scheduleSource === 'deploy') {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      url = `${this.deployData!.lib}/${encodeURIComponent(url)}?dl=1`
+    }
     this.setBackgroundImage(url)
   }
 }
@@ -546,7 +598,6 @@ aside {
   background-color: rgba(0, 0, 0, 0.5);
 
   border-radius: 0 6px 6px 0;
-  padding: 10px 0 20px;
 
   transition-property: left;
   transition-duration: 0.2s;
@@ -565,7 +616,7 @@ nav {
   width: 100%;
   height: 100%;
   overflow-y: auto;
-  padding: 0;
+  padding: 10px 0 20px;
 }
 
 h2 {
