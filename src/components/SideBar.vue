@@ -103,6 +103,7 @@ export default class SideBar extends Vue {
   deployData: DeployData | null = null
   favoriteImageList: string[] = []
   favoriteImageViewList: string[] = []
+  timerId: number | null = null
   scheduleData: ScheduleData = {
     displayMode: 'static',
     source: 'deploy',
@@ -248,7 +249,15 @@ export default class SideBar extends Vue {
     this.startSchedule()
   }
 
+  clearTimer () {
+    if (this.timerId !== null) {
+      clearTimeout(this.timerId)
+      this.timerId = null
+    }
+  }
+
   startSchedule () {
+    this.clearTimer()
     switch (this.scheduleMode) {
       case 'static':
         this.initBackgroundImage()
@@ -266,7 +275,7 @@ export default class SideBar extends Vue {
         }
         const timeInterval = this.scheduleData.interval + this.scheduleData.lastChange - now
         console.log(`Next change in ${timeInterval} seconds, or ${Math.ceil(timeInterval / 60)} minutes.`)
-        setTimeout(this.startSchedule.bind(this), timeInterval * 1000)
+        this.timerId = setTimeout(this.startSchedule.bind(this), timeInterval * 1000)
         break
       }
     }
