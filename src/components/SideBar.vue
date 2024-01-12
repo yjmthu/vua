@@ -203,7 +203,8 @@ export default class SideBar extends Vue {
 
   set scheduleIntervalUnit (value: 'second' | 'minute' | 'hour' | 'day') {
     this.scheduleData.intervalUnit = value
-    this.saveScheduleData()
+    // eslint-disable-next-line no-self-assign
+    this.timeInterval = this.timeInterval
   }
 
   get timeInterval () {
@@ -263,7 +264,9 @@ export default class SideBar extends Vue {
         } else {
           this.initBackgroundImage()
         }
-        setTimeout(this.startSchedule.bind(this), (this.scheduleData.lastChange + this.scheduleData.interval - now) * 1000)
+        const timeInterval = this.scheduleData.interval + this.scheduleData.lastChange - now
+        console.log(`Next change in ${timeInterval} seconds, or ${Math.ceil(timeInterval / 60)} minutes.`)
+        setTimeout(this.startSchedule.bind(this), timeInterval * 1000)
         break
       }
     }
@@ -533,7 +536,6 @@ h2 {
   background-color: transparent;
   color: white;
   cursor: pointer;
-  width: 90px;
   height: 28px;
   display: flex;
   flex-direction: row;
