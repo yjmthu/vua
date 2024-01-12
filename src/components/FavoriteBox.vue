@@ -129,26 +129,29 @@ export default class FavoriteBox extends Vue {
     target.removeEventListener('click', this.changeWhenClick.bind(this))
   }
 
-  uploadBookmarks () {
+  getBookmarkSync (): BookmarkSync | null {
     const syncString = localStorage.getItem('bookmarkSync')
     if (!syncString) {
       alert('同步失败，未选择云端存储位置！')
-      return
+      return null
     }
-    const sync = JSON.parse(syncString) as BookmarkSync
+    return JSON.parse(syncString) as BookmarkSync
+  }
+
+  uploadBookmarks () {
+    const sync = this.getBookmarkSync()
+    if (!sync) return
     uploadBookmark(JSON.stringify(this.favoriteData), sync)
   }
 
   downloadBookmarks () {
-    const syncString = localStorage.getItem('bookmarkSync')
-    if (!syncString) {
-      alert('同步失败，未选择云端存储位置！')
-      return
-    }
-    const sync = JSON.parse(syncString) as BookmarkSync
-    downloadBookmark(sync, (data: string) => {
-      this.favoriteData = JSON.parse(data)
-      localStorage.setItem('bookmarks', data)
+    const sync = this.getBookmarkSync()
+    if (!sync) return
+
+    downloadBookmark(sync, (data: Bookmark[]) => {
+      this.favoriteData = data
+      localStorage.setItem('bookmarks', JSON.stringify(this.favoriteData))
+      alert('下载成功！')
     })
   }
 }

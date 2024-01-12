@@ -45,16 +45,14 @@ function uploadBookmark (bookmarks: string, sync: BookmarkSync) {
   })
 }
 
-function downloadBookmark (sync: BookmarkSync, callback: (bookmarks: string) => void) {
+function downloadBookmark (sync: BookmarkSync, callback: (bookmarks: Bookmark[]) => void) {
   // https://cloud.tsinghua.edu.cn/lib/ecf780d7-98ca-48ce-abf0-290cab3abece/file/{folder}/vua.bookmarks.json?dl=1
 
   // Get File Download Link
   const nameList = `${sync.folder}/${sync.fileName}`.split('/')
   const p = nameList.map((name) => encodeURIComponent(name)).join('/')
-  console.log(p)
 
   const link = `${sync.host}/lib/${sync.repoId}/file${p}?dl=1`
-  console.log(link)
   axios.get(link).then((res) => {
     if (res.status === 200) callback(res.data)
     else alert('状态码错误！')
