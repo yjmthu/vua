@@ -21,7 +21,7 @@
 
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component'
-import { BookMark } from '@/utils/typedef'
+import { Bookmark } from '@/utils/typedef'
 import SvgIcon from './SvgIcon.vue'
 
 @Options({
@@ -33,7 +33,7 @@ import SvgIcon from './SvgIcon.vue'
   ]
 })
 export default class BookmarkEdit extends Vue {
-  favoriteData!: BookMark[]
+  favoriteData!: Bookmark[]
   index!: number
 
   mounted () {

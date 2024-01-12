@@ -13,6 +13,7 @@
     "copy-webpack-plugin": "^11.0.0",
     "core-js": "^3.8.3",
     "fetch-jsonp": "^1.2.3",
+    "form-data-encoder": "^4.0.2",
     "jsqr": "^1.4.0",
     "vue": "^3.2.13",
     "vue-class-component": "^8.0.0-0",

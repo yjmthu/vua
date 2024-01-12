@@ -11,6 +11,7 @@
         <button @click="login">Login</button>
         <button @click="update">Update</button>
         <button @click="deploy">Delpoy</button>
+        <button @click="config">Storage</button>
       </div>
       <h3>云盘数据</h3>
       <small>{{ currentFolder }}</small>
@@ -58,6 +59,7 @@
 
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from '@/components/SvgIcon.vue'
+import { BookmarkSync, uploadBookmark } from '@/utils/typedef'
 import axios from 'axios'
 
 interface FolderContent {
@@ -119,6 +121,13 @@ export default class SideBar extends Vue {
     mine: 'Gift'
   }
 
+  hideWhenClick (event: MouseEvent) {
+    const aside = this.$refs.aside as HTMLElement
+    if (aside && !aside.contains(event.target as Node)) {
+      this.showSideBar = false
+    }
+  }
+
   mounted (): void {
     /*
     chrome.storage.local.get(['deployData'], (result) => {
@@ -139,12 +148,7 @@ export default class SideBar extends Vue {
     })
     */
 
-    document.addEventListener('click', (event) => {
-      const aside = this.$refs.aside as HTMLElement
-      if (aside && !aside.contains(event.target as Node)) {
-        this.showSideBar = false
-      }
-    })
+    document.addEventListener('click', this.hideWhenClick.bind(this))
 
     const schedule = localStorage.getItem('scheduleData')
     if (schedule) {
@@ -163,6 +167,11 @@ export default class SideBar extends Vue {
     }
 
     this.updateStarColor()
+  }
+
+  beforeDestroy (): void {
+    this.clearTimer()
+    document.removeEventListener('click', this.hideWhenClick)
   }
 
   getCurrentBackgroundImage () {
@@ -490,6 +499,25 @@ export default class SideBar extends Vue {
     */
     localStorage.setItem('deployData', JSON.stringify(this.deployData))
     this.startSchedule()
+  }
+
+  config () {
+    if (!this.currentPath.length) {
+      alert('请选择文件夹！')
+      return
+    }
+
+    const bookmarkSync: BookmarkSync = {
+      host: this.host,
+      repoId: this.currentPath[0].id,
+      folder: this.currentPath.map((item, index) => (index ? item.name : '')).join('/'),
+      fileName: 'vua.bookmarks.json'
+    }
+
+    let bookmarks = localStorage.getItem('bookmarks')
+    if (!bookmarks) bookmarks = '[]'
+    uploadBookmark(bookmarks, bookmarkSync)
+    localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
   }
 
   setWallpaper () {

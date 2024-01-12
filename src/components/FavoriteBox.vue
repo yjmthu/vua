@@ -6,6 +6,8 @@
       <SvgIcon name="PlusSmall" size="30px" @click="enableBookmarkEdit"/>
       <SvgIcon name="ViewfinderCircle" size="30px" @click="$router.push({path: 'scan'})"/>
       <a href="https://yjmthu.github.io/vua/vua.crx" target="_blank"><SvgIcon name="Extension" size="30px"/></a>
+      <SvgIcon name="ArrowUpCircle" size="30px" @click="uploadBookmarks"/>
+      <SvgIcon name="ArrowDownCircle" size="30px" @click="downloadBookmarks"/>
     </nav>
     <ul ref="favorite-list" :style="{'--visible': mode !== 'normal' ? 'block' : 'none'}">
       <li v-for="(data, index) in favoriteData" :key="index" :href="data.url" :index="index">
@@ -27,7 +29,7 @@
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
 import BookmarkEdit from './BookmarkEdit.vue'
-import { BookMark } from '@/utils/typedef'
+import { Bookmark, BookmarkSync, uploadBookmark, downloadBookmark } from '@/utils/typedef'
 
 @Options({
   components: {
@@ -36,7 +38,7 @@ import { BookMark } from '@/utils/typedef'
   }
 })
 export default class FavoriteBox extends Vue {
-  favoriteData: BookMark[] = [
+  favoriteData: Bookmark[] = [
     {
       name: '网络学堂',
       url: 'https://learn.tsinghua.edu.cn/f/login'
@@ -63,7 +65,7 @@ export default class FavoriteBox extends Vue {
     this.mode = this.mode === m ? 'normal' : m
   }
 
-  addFavorite (data: BookMark, index: number) {
+  addFavorite (data: Bookmark, index: number) {
     if (index === -1) {
       this.favoriteData.push(data)
     } else {
@@ -77,6 +79,39 @@ export default class FavoriteBox extends Vue {
     localStorage.bookmarks = JSON.stringify(this.favoriteData)
   }
 
+  changeWhenClick (ev: MouseEvent) {
+    if (ev.target) {
+      const target = ev.target as HTMLElement
+      switch (this.mode) {
+        case 'delete': {
+          const index = target.getAttribute('index')
+          if (!index) return
+          const i = Number(index)
+          if (i >= 0 && i < this.favoriteData.length) {
+            // console.log(`删除${i}`, this.favoriteData[i])
+            this.favoriteData.splice(i, 1)
+            localStorage.bookmarks = JSON.stringify(this.favoriteData)
+          }
+          break
+        }
+        case 'edit': {
+          const index = target.getAttribute('index')
+          if (!index) return
+          this.index = Number(index)
+          this.enableBookmarkEdit(true)
+          break
+        }
+        case 'normal': {
+          const href = target.getAttribute('href')
+          if (!href) return
+          // window.location.href = href
+          window.open(href)
+          break
+        }
+      }
+    }
+  }
+
   mounted (): void {
     const tmp = localStorage.getItem('bookmarks')
     if (tmp) {
@@ -86,37 +121,34 @@ export default class FavoriteBox extends Vue {
     }
 
     const target = this.$refs['favorite-list'] as HTMLElement
-    target.addEventListener('click', (ev) => {
-      if (ev.target) {
-        const target = ev.target as HTMLElement
-        switch (this.mode) {
-          case 'delete': {
-            const index = target.getAttribute('index')
-            if (!index) return
-            const i = Number(index)
-            if (i >= 0 && i < this.favoriteData.length) {
-              // console.log(`删除${i}`, this.favoriteData[i])
-              this.favoriteData.splice(i, 1)
-              localStorage.bookmarks = JSON.stringify(this.favoriteData)
-            }
-            break
-          }
-          case 'edit': {
-            const index = target.getAttribute('index')
-            if (!index) return
-            this.index = Number(index)
-            this.enableBookmarkEdit(true)
-            break
-          }
-          case 'normal': {
-            const href = target.getAttribute('href')
-            if (!href) return
-            // window.location.href = href
-            window.open(href)
-            break
-          }
-        }
-      }
+    target.addEventListener('click', this.changeWhenClick.bind(this))
+  }
+
+  beforeDestroy (): void {
+    const target = this.$refs['favorite-list'] as HTMLElement
+    target.removeEventListener('click', this.changeWhenClick.bind(this))
+  }
+
+  uploadBookmarks () {
+    const syncString = localStorage.getItem('bookmarkSync')
+    if (!syncString) {
+      alert('同步失败，未选择云端存储位置！')
+      return
+    }
+    const sync = JSON.parse(syncString) as BookmarkSync
+    uploadBookmark(JSON.stringify(this.favoriteData), sync)
+  }
+
+  downloadBookmarks () {
+    const syncString = localStorage.getItem('bookmarkSync')
+    if (!syncString) {
+      alert('同步失败，未选择云端存储位置！')
+      return
+    }
+    const sync = JSON.parse(syncString) as BookmarkSync
+    downloadBookmark(sync, (data: string) => {
+      this.favoriteData = JSON.parse(data)
+      localStorage.setItem('bookmarks', data)
     })
   }
 }
