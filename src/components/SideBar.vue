@@ -24,7 +24,7 @@
       <h3>收藏预览</h3>
       <ul class="image-list" v-if="showSideBar">
         <li v-for="item in favoriteImageViewList" :key="item">
-          <img :src="item" alt="未能加载" width="192" height="108" @click="setFromFavorite(item)"/>
+          <img :src="item" :alt="getNameFromThumbnail(item)" width="192" height="108" @click="setFromFavorite(item)"/>
           <!-- <div>{{ item }}</div> -->
         </li>
       </ul>
@@ -320,6 +320,13 @@ export default class SideBar extends Vue {
     if (!match) return
     const url = `${this.host}/lib/${match[1]}/file/${match[2]}?dl=1`
     this.setBackgroundImage(url)
+  }
+
+  getNameFromThumbnail (thumbnail: string) {
+    const regex = /^https:\/\/cloud.tsinghua.edu.cn\/thumbnail\/.{36}\/192\/.*?([^\\/]*)$/g
+    const match = regex.exec(thumbnail)
+    if (!match) return '未能加载图片'
+    return decodeURIComponent(match[1])
   }
 
   get currentFolder () {
