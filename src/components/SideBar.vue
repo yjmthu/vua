@@ -150,25 +150,6 @@ export default class SideBar extends Vue {
   }
 
   mounted (): void {
-    /*
-    chrome.storage.local.get(['deployData'], (result) => {
-      if (result.deployData) {
-        this.deployData = {
-          url: result.deployData.url,
-          filesList: []
-        }
-        console.log(result.deployData.filesList)
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        for (const [_, item] of Object.entries(result.deployData.filesList)) {
-          this.deployData.filesList.push(item as string)
-        }
-        this.setWallpaper()
-      } else {
-        console.log('No deploy data found.')
-      }
-    })
-    */
-
     document.addEventListener('click', this.hideWhenClick.bind(this))
 
     const schedule = localStorage.getItem('scheduleData')
@@ -176,11 +157,6 @@ export default class SideBar extends Vue {
       this.scheduleData = JSON.parse(schedule)
     }
 
-    const data = localStorage.getItem('deployData')
-    if (data) {
-      this.deployData = JSON.parse(data)
-      this.startSchedule()
-    }
     const favorite = localStorage.getItem('favoriteImageList')
     if (favorite) {
       this.favoriteImageList = JSON.parse(favorite)
@@ -190,7 +166,11 @@ export default class SideBar extends Vue {
       localStorage.setItem('favoriteImageList', JSON.stringify(this.favoriteImageList))
     }
 
-    this.updateStarColor()
+    const data = localStorage.getItem('deployData')
+    if (data) {
+      this.deployData = JSON.parse(data)
+    }
+    this.startSchedule()
   }
 
   beforeDestroy (): void {
