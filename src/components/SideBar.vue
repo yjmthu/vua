@@ -96,7 +96,15 @@ interface ScheduleData {
 }
 
 function getFavoriteImageList () {
-  let images = ['fa29af52426942c88ba5']
+  let images = [
+    'fa29af52426942c88ba5',
+    'c627eba4d93e40e49b37',
+    '17bd938fab0f4e6aa42b',
+    '75dc4b8021b5479590bf',
+    'd9e60063f1da45dbada6',
+    'a8ead1efd05e44d19a0b',
+    'f48d199c141a458db9d7'
+  ]
   if (window.innerWidth >= 720) {
     images = [
       '805e90f9963d4547985a',
@@ -128,10 +136,10 @@ export default class SideBar extends Vue {
   favoriteImageViewList: string[] = []
   timerId: number | null = null
   scheduleData: ScheduleData = {
-    displayMode: 'static',
+    displayMode: 'timer',
     source: 'favorite',
     currentImage: '',
-    lastChange: Math.floor(Date.now() / 1000),
+    lastChange: 0,
     interval: 300,
     intervalUnit: 'second'
   }
