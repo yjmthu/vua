@@ -141,7 +141,7 @@ export default class FavoriteBox extends Vue {
   uploadBookmarks () {
     const sync = this.getBookmarkSync()
     if (!sync) return
-    uploadBookmark(JSON.stringify(this.favoriteData), sync)
+    uploadBookmark(JSON.stringify(this.favoriteData), sync, true)
   }
 
   downloadBookmarks () {

@@ -33,7 +33,7 @@
       <div id="schedule-config">
         <h4>自动切换模式</h4>
         <!-- radio button to choose schedule mode -->
-        <select v-model="scheduleMode">
+        <select v-model="scheduleMode" class="side-bar-input">
           <option value="static">静态壁纸</option>
           <option value="newtab">新标签页</option>
           <option value="timer">定时切换</option>
@@ -41,8 +41,8 @@
         <div v-if="scheduleMode === 'timer'">
           <h4>时间间隔</h4>
           <!-- user can input number (range in 1~60) and choose unit here (second, minute, hour, day)-->
-          <input type="number" min="1" max="60" v-model.number="timeInterval">
-          <select v-model="scheduleIntervalUnit">
+          <input type="number" class="side-bar-input" min="1" max="60" v-model.number="timeInterval">
+          <select v-model="scheduleIntervalUnit" class="side-bar-input">
             <option value="second">秒</option>
             <option value="minute">分</option>
             <option value="hour">时</option>
@@ -50,7 +50,7 @@
           </select>
         </div>
         <h4>壁纸来源</h4>
-        <select v-model="scheduleSource">
+        <select v-model="scheduleSource" class="side-bar-input">
           <option value="favorite">收藏</option>
           <option value="deploy">部署</option>
         </select>
@@ -64,7 +64,7 @@
 
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { BookmarkSync, uploadBookmark } from '@/utils/typedef'
+import { BookmarkSync, checkBookmark, uploadBookmark } from '@/utils/typedef'
 import axios from 'axios'
 
 interface FolderContent {
@@ -534,10 +534,15 @@ export default class SideBar extends Vue {
       fileName: 'vua.bookmarks.json'
     }
 
-    let bookmarks = localStorage.getItem('bookmarks')
-    if (!bookmarks) bookmarks = '[]'
-    uploadBookmark(bookmarks, bookmarkSync)
-    localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
+    checkBookmark(bookmarkSync, (exsist: boolean) => {
+      if (!exsist || confirm('该文件夹下已存在书签文件，是否覆盖？')) {
+        let bookmarks = localStorage.getItem('bookmarks')
+        if (!bookmarks) bookmarks = '[]'
+        uploadBookmark(bookmarks, bookmarkSync, true)
+      }
+      localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
+      alert('书签已准备就绪！')
+    })
   }
 
   setWallpaper () {
@@ -739,20 +744,27 @@ ul.image-list > li {
   }
 }
 
-select {
+.side-bar-input {
   display: block;
+  box-sizing: border-box;
   padding: 6px;
   width: 90%;
   background-color: #ffffff1a;
   color: inherit;
   border-radius: 4px;
+  border: 2px solid #767676;
   outline: none;
   margin: 6px 0;
 
-  option {
-    padding: 6px 12px;
-    background-color: #46413a;
+  &:hover {
+    background-color: #ffffff33;
+    border: 2px solid #AAA;
   }
+}
+
+select > option {
+  padding: 6px 12px;
+  background-color: #46413a;
 }
 
 input::-webkit-inner-spin-button {
@@ -761,18 +773,5 @@ input::-webkit-inner-spin-button {
 
 input::-webkit-outer-spin-button{
   -webkit-appearance: none !important;
-}
-
-input[type=number] {
-  width: 90%;
-  display: block;
-  background-color: #ffffff1a;
-  color: white;
-
-  box-sizing: border-box;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  outline: none;
-  padding: 5px 15px;
 }
 </style>

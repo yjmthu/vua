@@ -19,7 +19,20 @@ interface BookmarkSync {
   fileName: string
 }
 
-function uploadBookmark (bookmarks: string, sync: BookmarkSync) {
+function checkBookmark (sync: BookmarkSync, callback: (exsist: boolean) => void) {
+  // https://cloud.seafile.com/api2/repos/{repo-id}/file/detail/?p=/foo.c
+  // Get File Detail
+  const link = `${sync.host}/api2/repos/${sync.repoId}/file/detail/?p=${encodeURIComponent(sync.folder + '/' + sync.fileName)}`
+  axios.get(link).then((res) => {
+    callback(res.data && res.data.type === 'file')
+  }).catch((err) => {
+    const result = true
+    callback(result)
+    console.log(err)
+  })
+}
+
+function uploadBookmark (bookmarks: string, sync: BookmarkSync, overwrite: boolean) {
   // https://cloud.seafile.com/api2/repos/{repo-id}/upload-link/?p=/upload-dir
   // Get Upload Link
   const link = `${sync.host}/api2/repos/${sync.repoId}/upload-link/?p=${encodeURIComponent(sync.folder)}`
@@ -30,7 +43,7 @@ function uploadBookmark (bookmarks: string, sync: BookmarkSync) {
     const fileName = sync.fileName
     data.append('file', new Blob([bookmarks], { type: 'application/json' }), fileName)
     data.append('parent_dir', sync.folder)
-    data.append('replace', '1')
+    data.append('replace', overwrite ? '1' : '0')
     axios.post(uploadLink, data).then((res) => {
       if (!res.data) return
       alert('上传成功！')
@@ -61,4 +74,4 @@ function downloadBookmark (sync: BookmarkSync, callback: (bookmarks: Bookmark[])
   })
 }
 
-export { Bookmark, BookmarkSync, FavoriteLink, uploadBookmark, downloadBookmark }
+export { Bookmark, BookmarkSync, FavoriteLink, checkBookmark, uploadBookmark, downloadBookmark }
