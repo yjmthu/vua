@@ -26,7 +26,7 @@ function checkBookmark (sync: BookmarkSync, callback: (exsist: boolean) => void)
   axios.get(link).then((res) => {
     callback(res.data && res.data.type === 'file')
   }).catch((err) => {
-    const result = true
+    const result = false
     callback(result)
     console.log(err)
   })
