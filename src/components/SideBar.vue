@@ -543,13 +543,13 @@ export default class SideBar extends Vue {
     }
 
     checkBookmark(bookmarkSync, (exsist: boolean) => {
-      if (!exsist || confirm('该文件夹下已存在书签文件，是否覆盖？')) {
-        let bookmarks = localStorage.getItem('bookmarks')
-        if (!bookmarks) bookmarks = '[]'
-        uploadBookmark(bookmarks, bookmarkSync, true)
-      }
-      localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
-      alert('书签已准备就绪！')
+      // if (!exsist || confirm('该文件夹下已存在书签文件，是否覆盖？')) {
+      //   let bookmarks = localStorage.getItem('bookmarks')
+      //   if (!bookmarks) bookmarks = '[]'
+      //   uploadBookmark(bookmarks, bookmarkSync, true)
+      // }
+      // localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
+      alert(`云端状态：${exsist ? '已存在书签文件！' : '不存在书签文件！'}`)
     })
   }
 

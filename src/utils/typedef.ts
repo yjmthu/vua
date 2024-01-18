@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-interface Bookmark {
+interface FavoriteBookmark {
   name: string
   url: string
 }
@@ -58,7 +58,7 @@ function uploadBookmark (bookmarks: string, sync: BookmarkSync, overwrite: boole
   })
 }
 
-function downloadBookmark (sync: BookmarkSync, callback: (bookmarks: Bookmark[]) => void) {
+function downloadBookmark (sync: BookmarkSync, callback: (bookmarks: {favorite: FavoriteBookmark[], bookmark: chrome.bookmarks.BookmarkTreeNode}) => void) {
   // https://cloud.tsinghua.edu.cn/lib/ecf780d7-98ca-48ce-abf0-290cab3abece/file/{folder}/vua.bookmarks.json?dl=1
 
   // Get File Download Link
@@ -74,4 +74,4 @@ function downloadBookmark (sync: BookmarkSync, callback: (bookmarks: Bookmark[])
   })
 }
 
-export { Bookmark, BookmarkSync, FavoriteLink, checkBookmark, uploadBookmark, downloadBookmark }
+export { FavoriteBookmark, BookmarkSync, FavoriteLink, checkBookmark, uploadBookmark, downloadBookmark }

@@ -13,22 +13,12 @@
     "newtab": "index.html"
   },
   "host_permissions": [
-    "https://api.bing.com/*",
-    "https://suggestqueries.google.com/*",
-    "https://duckduckgo.com/*",
-    "https://suggestion.baidu.com/*",
-    "https://edith.xiaohongshu.com/*",
-    "https://suggest.yandex.com/suggest-ff.cgi*",
-    "https://en.wikipedia.org/w/api.php*",
-    "https://kaifa.baidu.com/rest/v1/recommend/suggests*",
-    "https://s.search.bilibili.com/main/suggest*",
-    "https://scholar.google.com/*",
-    "https://cloud.tsinghua.edu.cn/*",
     "<all_urls>"
   ],
   "permissions": [
     "storage",
     "cookies",
-    "tabs"
+    "tabs",
+    "bookmarks"
   ]
 }

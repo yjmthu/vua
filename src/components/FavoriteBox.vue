@@ -1,27 +1,30 @@
 <template>
   <div id="favorite-box" class="center dark-scrub-backgound">
     <nav>
-      <SvgIcon name="PencilSquare" size="30px" @click="toggleMode('edit')"/>
-      <SvgIcon name="Trash" size="30px" @click="toggleMode('delete')"/>
-      <SvgIcon name="PlusSmall" size="30px" @click="enableBookmarkEdit"/>
-      <SvgIcon name="ViewfinderCircle" size="30px" @click="$router.push({path: 'scan'})"/>
-      <a href="https://yjmthu.github.io/vua/vua.crx" target="_blank"><SvgIcon name="Extension" size="30px"/></a>
-      <SvgIcon name="ArrowUpCircle" size="30px" @click="uploadBookmarks"/>
-      <SvgIcon name="ArrowDownCircle" size="30px" @click="downloadBookmarks"/>
+      <div>
+        <small @click="() => {currentTab = 0}" :class="{active: currentTab === 0}">收藏夹</small>
+        <small @click="() => {currentTab = 1}" :class="{active: currentTab === 1}">书签栏</small>
+      </div>
+      <div>
+        <SvgIcon name="ArrowLeft" size="30px" @click="leaveNode"></SvgIcon>
+        <SvgIcon name="ViewfinderCircle" size="30px" @click="$router.push({path: 'scan'})"/>
+        <a href="https://yjmthu.github.io/vua/vua.crx" target="_blank"><SvgIcon name="Extension" size="30px"/></a>
+        <SvgIcon name="ArrowUpCircle" size="30px" @click="uploadBookmarks"/>
+        <SvgIcon name="ArrowDownCircle" size="30px" @click="downloadBookmarks"/>
+      </div>
     </nav>
-    <ul ref="favorite-list" :style="{'--visible': mode !== 'normal' ? 'block' : 'none'}">
-      <li v-for="(data, index) in favoriteData" :key="index" :href="data.url" :index="index">
-        {{ data.name }}
-        <SvgIcon class="li-icon" name="PlusSmall" v-if="mode=='edit'" size="14px"/>
-        <SvgIcon class="li-icon" name="MinusSmall" v-else-if="mode=='delete'" size="14px"/>
+    <ul v-if="currentTab == 0" id="favorite-bookmarks">
+      <li v-for="(data, index) in favoriteBookmark" :key="index" @click="enterNode(index)">
+        <a :href="data.url">{{  data.name }}</a>
       </li>
     </ul>
-    <BookmarkEdit v-if="bookmarkEdit"
-     :favoriteData="favoriteData"
-     :index="index"
-     @bookmarkEdit="enableBookmarkEdit"
-     @addFavorite="addFavorite"/>
-    <div @click="$emit('toggleVisbility')"></div>
+    <ul v-if="currentTab == 1" id="all-bookmarks">
+      <li v-for="(data, index) in currentNode?.children" :key="index" @click="enterNode(index)">
+        <SvgIcon :name="data.children ? 'Folder': 'Document'"></SvgIcon>
+        {{ data.title }}
+      </li>
+    </ul>
+    <div @click="$emit('toggleVisbility')">{{ getCurrentParth() }}</div>
   </div>
 </template>
 
@@ -29,7 +32,7 @@
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
 import BookmarkEdit from './BookmarkEdit.vue'
-import { Bookmark, BookmarkSync, uploadBookmark, downloadBookmark } from '@/utils/typedef'
+import { FavoriteBookmark, BookmarkSync, uploadBookmark, downloadBookmark } from '@/utils/typedef'
 
 @Options({
   components: {
@@ -38,95 +41,64 @@ import { Bookmark, BookmarkSync, uploadBookmark, downloadBookmark } from '@/util
   }
 })
 export default class FavoriteBox extends Vue {
-  favoriteData: Bookmark[] = [
-    {
-      name: '网络学堂',
-      url: 'https://learn.tsinghua.edu.cn/f/login'
-    },
-    {
-      name: '信息门户',
-      url: 'http://info.tsinghua.edu.cn/'
-    }
-  ]
+  favoriteBookmark: FavoriteBookmark[] = []
+  favriteDirStack: chrome.bookmarks.BookmarkTreeNode[] = []
+  currentNode: chrome.bookmarks.BookmarkTreeNode | null = null
 
+  currentTab = 0
   bookmarkEdit = false
   index = -1
-  mode: 'normal' | 'delete' | 'edit' = 'normal'
 
-  enableBookmarkEdit (on: boolean) {
-    this.bookmarkEdit = on
-    if (!on) {
-      this.index = -1
-      this.mode = 'normal'
+  getCurrentParth () {
+    return this.favriteDirStack.map((node) => {
+      return node.title
+    }).join('/')
+  }
+
+  readFavoriteBookmarks () {
+    const data = localStorage.getItem('bookmarks')
+    if (data) {
+      this.favoriteBookmark = JSON.parse(data) as FavoriteBookmark[]
     }
   }
 
-  toggleMode (m = this.mode) {
-    this.mode = this.mode === m ? 'normal' : m
+  writeFavoriteBookmarks (data: FavoriteBookmark[]) {
+    localStorage.setItem('bookmarks', JSON.stringify(data))
   }
 
-  addFavorite (data: Bookmark, index: number) {
-    if (index === -1) {
-      this.favoriteData.push(data)
-    } else {
-      this.favoriteData[index] = data
+  enterNode (index: number) {
+    if (!this.currentNode?.children) {
+      return
     }
-    localStorage.bookmarks = JSON.stringify(this.favoriteData)
-  }
-
-  clearBookmarks () {
-    this.favoriteData = []
-    localStorage.bookmarks = JSON.stringify(this.favoriteData)
-  }
-
-  changeWhenClick (ev: MouseEvent) {
-    if (ev.target) {
-      const target = ev.target as HTMLElement
-      switch (this.mode) {
-        case 'delete': {
-          const index = target.getAttribute('index')
-          if (!index) return
-          const i = Number(index)
-          if (i >= 0 && i < this.favoriteData.length) {
-            // console.log(`删除${i}`, this.favoriteData[i])
-            this.favoriteData.splice(i, 1)
-            localStorage.bookmarks = JSON.stringify(this.favoriteData)
-          }
-          break
-        }
-        case 'edit': {
-          const index = target.getAttribute('index')
-          if (!index) return
-          this.index = Number(index)
-          this.enableBookmarkEdit(true)
-          break
-        }
-        case 'normal': {
-          const href = target.getAttribute('href')
-          if (!href) return
-          // window.location.href = href
-          window.open(href)
-          break
-        }
-      }
+    const node = this.currentNode.children[index]
+    if (node?.url) {
+      window.open(node.url)
+      return
     }
+    this.favriteDirStack.push(node)
+    this.currentNode = node
+  }
+
+  leaveNode () {
+    if (this.favriteDirStack.length <= 1) {
+      return
+    }
+    this.favriteDirStack.pop()
+    this.currentNode = this.favriteDirStack[this.favriteDirStack.length - 1]
   }
 
   mounted (): void {
-    const tmp = localStorage.getItem('bookmarks')
-    if (tmp) {
-      this.favoriteData = JSON.parse(tmp)
-    } else {
-      localStorage.setItem('bookmarks', JSON.stringify(this.favoriteData))
-    }
+    chrome.bookmarks.getTree((bookmarkArray) => {
+      const allBookmarks = bookmarkArray[0]?.children
+      if (allBookmarks && allBookmarks.length) {
+        this.currentNode = allBookmarks[0]
+        this.favriteDirStack.push(this.currentNode)
+      } else {
+        console.log('获取书签失败。')
+      }
+    })
 
-    const target = this.$refs['favorite-list'] as HTMLElement
-    target.addEventListener('click', this.changeWhenClick.bind(this))
-  }
-
-  beforeDestroy (): void {
-    const target = this.$refs['favorite-list'] as HTMLElement
-    target.removeEventListener('click', this.changeWhenClick.bind(this))
+    this.readFavoriteBookmarks()
   }
 
   getBookmarkSync (): BookmarkSync | null {
@@ -138,20 +110,86 @@ export default class FavoriteBox extends Vue {
     return JSON.parse(syncString) as BookmarkSync
   }
 
+  clearBookmarks (callback: (rootId: string) => void) {
+    chrome.bookmarks.getTree((bookmarkArray) => {
+      const allBookmarks = bookmarkArray[0]?.children
+      if (allBookmarks && allBookmarks.length) {
+        const rootId = allBookmarks[0].id
+        const roots = allBookmarks[0].children
+        if (!roots || !roots.length) {
+          callback(rootId)
+          return
+        }
+        let size = roots.length
+        for (const node of roots) {
+          chrome.bookmarks.removeTree(node.id).then(() => {
+            size -= 1
+            if (!size) {
+              callback(rootId)
+            }
+          }).catch((err) => {
+            console.log(err)
+          })
+        }
+      } else {
+        alert('无法获取默认书签文件夹！')
+      }
+    })
+  }
+
   uploadBookmarks () {
     const sync = this.getBookmarkSync()
-    if (!sync) return
-    uploadBookmark(JSON.stringify(this.favoriteData), sync, true)
+    if (!sync) {
+      alert('同步失败，未选择云端存储位置！')
+      return
+    }
+    if (!this.favriteDirStack.length) {
+      alert('上传失败，书签数据错误！')
+      return
+    }
+    uploadBookmark(JSON.stringify({
+      bookmark: this.favriteDirStack[0],
+      favorite: this.favoriteBookmark
+    }), sync, true)
+  }
+
+  addBookmark (parentId: string, node: chrome.bookmarks.BookmarkTreeNode) {
+    chrome.bookmarks.create({
+      parentId,
+      title: node.title,
+      url: node.url
+    }, (newNode) => {
+      if (node.children) {
+        for (const child of node.children) {
+          this.addBookmark(newNode.id, child)
+        }
+      }
+    })
   }
 
   downloadBookmarks () {
     const sync = this.getBookmarkSync()
     if (!sync) return
 
-    downloadBookmark(sync, (data: Bookmark[]) => {
-      this.favoriteData = data
-      localStorage.setItem('bookmarks', JSON.stringify(this.favoriteData))
-      alert('下载成功！')
+    downloadBookmark(sync, (data) => {
+      if (data.bookmark && data.favorite) {
+        this.writeFavoriteBookmarks(data.favorite)
+        this.favoriteBookmark = data.favorite
+        console.log('下载书签成功！')
+      } else {
+        alert('下载书签失败！')
+        return
+      }
+      this.clearBookmarks((rootId: string) => {
+        console.log('清空书签成功！')
+        this.currentNode = data.bookmark
+        this.favriteDirStack = [this.currentNode]
+        const dataChilren = this.currentNode.children || []
+        for (const node of dataChilren) {
+          this.addBookmark(rootId, node)
+        }
+        console.log('创建书签成功！')
+      })
     })
   }
 }
@@ -161,18 +199,16 @@ export default class FavoriteBox extends Vue {
 #favorite-box {
   // position: relative;
   width: 40%;
-  height: 400px;
   border-radius: 10px;
   z-index: 100;
-  padding: 10px 20px 40px;
+  padding: 10px 20px 0;
 
   & > div:last-child {
+    color: aqua;
+    font-size: smaller;
     cursor: pointer;
     border-top: solid 1px gray;
-    position: absolute;
-    width: calc(100% - 60px);
     height: 40px;
-    bottom: 0;
   }
 }
 
@@ -186,18 +222,42 @@ nav {
   padding: 2px;
   border-bottom: solid 1px blue;
   color: white;
+  display: flex;
+  flex-direction: row;
 
-  * {
-    box-sizing: border-box;
-  }
-  & > * {
-    position: relative;
+  & > div {
+    padding: 0;
+    margin: 0;
+    font-size: 18px;
 
-    background-color: transparent;
-    border-radius: 6px;
-    cursor: pointer;
-    &:hover {
-      background-color: darkgray;
+    small {
+      border-radius: 6px;
+      display: inline-block;
+      vertical-align: middle;
+      padding: 0px 8px;
+
+      &.active {
+        background-color: darkgray;
+      }
+    }
+
+    &:first-child {
+      flex: 1;
+      line-height: 30px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    &:last-child > * {
+      position: relative;
+
+      background-color: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      &:hover {
+        background-color: darkgray;
+      }
     }
   }
 
@@ -214,19 +274,13 @@ nav {
   }
 }
 
-ul {
-  display: grid;
-  // grid-gap: 20px 20px;
-  // justify-content: space-between;
-  grid-template-columns: repeat(auto-fill, 50px);
-  row-gap: 8px;
+ul#favorite-bookmarks, ul#all-bookmarks {
   list-style: none;
-
   padding: 2px;
+  height: 350px;
+  overflow-y: auto;
 
   & > li {
-    position: relative;
-    list-style-type: none;
     border-radius: 6px;
     background-color: rgba(90, 90, 90, 0.8);
     list-style-type: none;
@@ -236,27 +290,18 @@ ul {
       background-color: rgba(200, 200, 200, 0.5);
     }
 
-    text-align: center;
-    padding: 4px;
-    width: 40px;
-    height: 40px;
+    padding: 8px;
+    margin-bottom: 6px;
     box-sizing: border-box;
     font-size: smaller;
     color: white;
     cursor: pointer;
 
-    &>.li-icon {
-      position: absolute;
-
+    &>svg {
       color: white;
-      background-color: rgba(0, 0, 0, 0.773);
       width: 16px;
       height: 16px;
       padding: 1px;
-      border-radius: 8px;
-
-      right: -5px;
-      top: -5px;
     }
   }
 }
