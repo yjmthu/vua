@@ -2,7 +2,7 @@
   <aside ref="aside" :class="showSideBar? 'show' : 'hide'">
     <div id="wallpaper-buttons">
       <SvgIcon name="Photo" size="16px" @click="toggleSideBar"/>
-      <SvgIcon id="favoriteStar" name="Star" size="16px" @click="toggleFavorite"/>
+      <SvgIcon id="favoriteStar" name="Star" size="16px" :class="{checked: isFavorite()}" @click="toggleFavorite"/>
       <SvgIcon name="ArrowPath" size="16px" @click="setWallpaper"/>
     </div>
     <nav>
@@ -64,7 +64,7 @@
 
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { BookmarkSync, checkBookmark, uploadBookmark } from '@/utils/typedef'
+import { BookmarkSync, checkBookmark } from '@/utils/typedef'
 import axios from 'axios'
 
 interface FolderContent {
@@ -96,7 +96,7 @@ interface ScheduleData {
 }
 
 function getFavoriteImageList () {
-  let images = [
+  const imagesForMobile = [
     'fa29af52426942c88ba5',
     'c627eba4d93e40e49b37',
     '17bd938fab0f4e6aa42b',
@@ -105,17 +105,16 @@ function getFavoriteImageList () {
     'a8ead1efd05e44d19a0b',
     'f48d199c141a458db9d7'
   ]
-  if (window.innerWidth >= 720) {
-    images = [
-      '805e90f9963d4547985a',
-      '2d9fabd26a7b4163b770',
-      'cdf726e5d5e44a85982e',
-      '014e257f8d4d428b98f6',
-      '80eb15b257574159a9e4',
-      '9f9b4899305f40cf8d6a',
-      '542dd08d0a3f40a39970'
-    ]
-  }
+  const imagesForPC = [
+    '805e90f9963d4547985a',
+    '2d9fabd26a7b4163b770',
+    'cdf726e5d5e44a85982e',
+    '014e257f8d4d428b98f6',
+    '80eb15b257574159a9e4',
+    '9f9b4899305f40cf8d6a',
+    '542dd08d0a3f40a39970'
+  ]
+  const images = (window.innerWidth >= 720) ? imagesForPC : imagesForMobile
   return images.map((item) => `https://cloud.tsinghua.edu.cn/f/${item}/?dl=1`)
 }
 
@@ -191,18 +190,6 @@ export default class SideBar extends Vue {
     if (!app) return ''
     const text = app.style.backgroundImage
     return text.slice(5, text.length - 2)
-  }
-
-  updateStarColor () {
-    // if currentBackgroundImage is in favoriteImageList, then set the star to yellow
-    const star = document.getElementById('favoriteStar')
-    if (star) {
-      if (this.isFavorite()) {
-        star.style.color = 'yellow'
-      } else {
-        star.style.color = 'inherit'
-      }
-    }
   }
 
   saveScheduleData () {
@@ -347,7 +334,6 @@ export default class SideBar extends Vue {
     if (!app) return
     app.style.backgroundImage = `url(${url})`
     this.scheduleData.currentImage = url
-    this.updateStarColor()
     this.saveScheduleData()
   }
 
@@ -389,7 +375,6 @@ export default class SideBar extends Vue {
     } else {
       this.favoriteImageList.splice(index, 1)
     }
-    this.updateStarColor()
 
     this.updateViewList()
     localStorage.setItem('favoriteImageList', JSON.stringify(this.favoriteImageList))

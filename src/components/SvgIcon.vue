@@ -25,8 +25,7 @@ export default class SvgIcon extends Vue {
   get styleSheet () {
     return {
       width: this.size,
-      height: this.size,
-      color: 'inherit'
+      height: this.size
     }
   }
 
@@ -44,5 +43,6 @@ export default class SvgIcon extends Vue {
 .svg-icon {
   fill: currentColor;
   overflow: hidden;
+  color: 'inherit';
 }
 </style>

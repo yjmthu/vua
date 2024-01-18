@@ -11,17 +11,17 @@
         <a href="https://yjmthu.github.io/vua/vua.crx" target="_blank"><SvgIcon name="Extension" size="30px"/></a>
         <SvgIcon name="ArrowUpCircle" size="30px" @click="uploadBookmarks"/>
         <SvgIcon name="ArrowDownCircle" size="30px" @click="downloadBookmarks"/>
+        <SvgIcon name="Trash" size="30px" :class="{ checked: isTrashMode }" @click="() => { isTrashMode = !isTrashMode }"></SvgIcon>
       </div>
     </nav>
     <ul v-if="currentTab == 0" id="favorite-bookmarks">
-      <li v-for="(data, index) in favoriteBookmark" :key="index" @click="enterNode(index)">
-        <a :href="data.url">{{  data.name }}</a>
-      </li>
+      <li v-for="(data, index) in favoriteBookmark" :key="index" @click="clickFavorite(index)" @contextmenu.prevent="showBookmarkEdit(index)">{{  data.name }}</li>
+      <li @click="addFavorite"><SvgIcon name="PlusSmall" size="24px"></SvgIcon></li>
     </ul>
     <ul v-if="currentTab == 1" id="all-bookmarks">
       <li v-for="(data, index) in currentNode?.children" :key="index" @click="enterNode(index)">
-        <SvgIcon :name="data.children ? 'Folder': 'Document'"></SvgIcon>
-        {{ data.title }}
+        <SvgIcon :name="data.children ? 'Folder': 'Document'" size="14px"></SvgIcon>
+        <span>{{ data.title }}</span>
       </li>
     </ul>
     <div @click="$emit('toggleVisbility')">{{ getCurrentParth() }}</div>
@@ -33,6 +33,7 @@ import { Vue, Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
 import BookmarkEdit from './BookmarkEdit.vue'
 import { FavoriteBookmark, BookmarkSync, uploadBookmark, downloadBookmark } from '@/utils/typedef'
+import { createApp, App } from 'vue'
 
 @Options({
   components: {
@@ -42,15 +43,13 @@ import { FavoriteBookmark, BookmarkSync, uploadBookmark, downloadBookmark } from
 })
 export default class FavoriteBox extends Vue {
   favoriteBookmark: FavoriteBookmark[] = []
-  favriteDirStack: chrome.bookmarks.BookmarkTreeNode[] = []
+  bookmarkDirStack: chrome.bookmarks.BookmarkTreeNode[] = []
   currentNode: chrome.bookmarks.BookmarkTreeNode | null = null
-
+  isTrashMode = false
   currentTab = 0
-  bookmarkEdit = false
-  index = -1
 
   getCurrentParth () {
-    return this.favriteDirStack.map((node) => {
+    return this.bookmarkDirStack.map((node) => {
       return node.title
     }).join('/')
   }
@@ -67,24 +66,50 @@ export default class FavoriteBox extends Vue {
   }
 
   enterNode (index: number) {
-    if (!this.currentNode?.children) {
+    const children = this.currentNode?.children
+    if (!children) return
+    const node = children[index]
+
+    if (this.isTrashMode) {
+      chrome.bookmarks.remove(node.id).then(() => {
+        this.currentNode?.children?.splice(index, 1)
+      }).catch((err) => {
+        alert(err)
+      })
       return
     }
-    const node = this.currentNode.children[index]
+
     if (node?.url) {
       window.open(node.url)
       return
     }
-    this.favriteDirStack.push(node)
+    this.bookmarkDirStack.push(node)
     this.currentNode = node
   }
 
   leaveNode () {
-    if (this.favriteDirStack.length <= 1) {
+    if (this.bookmarkDirStack.length <= 1) {
       return
     }
-    this.favriteDirStack.pop()
-    this.currentNode = this.favriteDirStack[this.favriteDirStack.length - 1]
+    this.bookmarkDirStack.pop()
+    this.currentNode = this.bookmarkDirStack[this.bookmarkDirStack.length - 1]
+  }
+
+  addFavorite () {
+    this.showBookmarkEdit(-1)
+  }
+
+  clickFavorite (index: number) {
+    if (index < 0 || index >= this.favoriteBookmark.length) {
+      return
+    }
+    if (this.isTrashMode) {
+      this.favoriteBookmark.splice(index, 1)
+    } else {
+      // open url in new tab
+      const url = this.favoriteBookmark[index].url
+      window.open(url)
+    }
   }
 
   mounted (): void {
@@ -92,7 +117,7 @@ export default class FavoriteBox extends Vue {
       const allBookmarks = bookmarkArray[0]?.children
       if (allBookmarks && allBookmarks.length) {
         this.currentNode = allBookmarks[0]
-        this.favriteDirStack.push(this.currentNode)
+        this.bookmarkDirStack.push(this.currentNode)
       } else {
         console.log('获取书签失败。')
       }
@@ -143,12 +168,12 @@ export default class FavoriteBox extends Vue {
       alert('同步失败，未选择云端存储位置！')
       return
     }
-    if (!this.favriteDirStack.length) {
+    if (!this.bookmarkDirStack.length) {
       alert('上传失败，书签数据错误！')
       return
     }
     uploadBookmark(JSON.stringify({
-      bookmark: this.favriteDirStack[0],
+      bookmark: this.bookmarkDirStack[0],
       favorite: this.favoriteBookmark
     }), sync, true)
   }
@@ -183,7 +208,7 @@ export default class FavoriteBox extends Vue {
       this.clearBookmarks((rootId: string) => {
         console.log('清空书签成功！')
         this.currentNode = data.bookmark
-        this.favriteDirStack = [this.currentNode]
+        this.bookmarkDirStack = [this.currentNode]
         const dataChilren = this.currentNode.children || []
         for (const node of dataChilren) {
           this.addBookmark(rootId, node)
@@ -191,6 +216,33 @@ export default class FavoriteBox extends Vue {
         console.log('创建书签成功！')
       })
     })
+  }
+
+  showBookmarkEdit (index: number) {
+    const favorite = index > 0 ? this.favoriteBookmark[index] : null
+    // create 'bookmark-edit' element
+    const div = document.createElement('div')
+    div.id = 'bookmark-edit'
+    div.style.position = 'absolute'
+    div.style.zIndex = '1000'
+    document.body.appendChild(div)
+    let bookmarkEdit: App<Element> | null = null
+    const callback = (data: FavoriteBookmark, isEdit: boolean) => {
+      if (isEdit) {
+        if (favorite) {
+          this.favoriteBookmark[index] = data
+        } else {
+          this.favoriteBookmark.push(data)
+        }
+      }
+      this.writeFavoriteBookmarks(this.favoriteBookmark)
+      // delete bookmarkEdit
+      bookmarkEdit?.unmount()
+      document.body.removeChild(div)
+    }
+    bookmarkEdit = createApp(BookmarkEdit, { favorite, callback })
+    // mount it on an element
+    bookmarkEdit.mount('#bookmark-edit')
   }
 }
 </script>
@@ -204,6 +256,8 @@ export default class FavoriteBox extends Vue {
   padding: 10px 20px 0;
 
   & > div:last-child {
+    box-sizing: border-box;
+    padding-top: 4px;
     color: aqua;
     font-size: smaller;
     cursor: pointer;
@@ -231,13 +285,20 @@ nav {
     font-size: 18px;
 
     small {
+      user-select: none;
       border-radius: 6px;
       display: inline-block;
       vertical-align: middle;
       padding: 0px 8px;
+      cursor: pointer;
+      margin-right: 4px;
 
       &.active {
         background-color: darkgray;
+      }
+
+      &:hover {
+        background-color: gray;
       }
     }
 
@@ -274,8 +335,7 @@ nav {
   }
 }
 
-ul#favorite-bookmarks, ul#all-bookmarks {
-  list-style: none;
+ul {
   padding: 2px;
   height: 350px;
   overflow-y: auto;
@@ -296,13 +356,34 @@ ul#favorite-bookmarks, ul#all-bookmarks {
     font-size: smaller;
     color: white;
     cursor: pointer;
+  }
+}
 
-    &>svg {
+ul#favorite-bookmarks {
+  line-height: 14px;
+  & > li {
+    display: inline-block;
+    vertical-align: middle;
+    width: 40px;
+    height: 40px;
+    margin: 4px;
+  }
+}
+
+ul#all-bookmarks {
+  & > li {
+    line-height: 14px;
+    font-size: 14px;
+    & > * {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    & > svg {
       color: white;
-      width: 16px;
-      height: 16px;
       padding: 1px;
     }
   }
 }
+
 </style>

@@ -1,71 +1,62 @@
 <template>
-  <form class="center" ref="form">
+  <div class="center">
     <SvgIcon name="XCircle" size="20px" className="close-button" @click="cancelConfig"/>
     <h4>
       <span>书签编辑</span>
     </h4>
     <div>
       <span>名称</span>
-      <input type="text" ref="text" name="name">
+      <input type="text" name="name" v-model="temp.name">
     </div>
     <div>
       <span>链接</span>
-      <input type="url" ref="url" name="url">
+      <input type="url" name="url" v-model="temp.url">
     </div>
     <div>
       <button type="button" @click="cancelConfig">取消</button>
       <button type="button" @click="confirmConfig">确定</button>
     </div>
-  </form>
+  </div>
 </template>
 
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component'
-import { FavoriteBookmark } from '@/utils/typedef'
 import SvgIcon from './SvgIcon.vue'
+import { FavoriteBookmark } from '@/utils/typedef'
 
 @Options({
   components: {
     SvgIcon
   },
   props: [
-    'favoriteData', 'index'
+    'favorite', 'callback'
   ]
 })
 export default class BookmarkEdit extends Vue {
-  favoriteData!: FavoriteBookmark[]
-  index!: number
+  favorite!: FavoriteBookmark | null
+  temp: FavoriteBookmark = {
+    name: '',
+    url: ''
+  }
 
-  mounted () {
-    if (this.index !== -1) {
-      const t = this.$refs.text as HTMLInputElement
-      t.value = this.favoriteData[this.index].name
-      const u = this.$refs.url as HTMLInputElement
-      u.value = this.favoriteData[this.index].url
-    }
+  callback!: (data: FavoriteBookmark, isEdit: boolean) => void
+
+  mounted (): void {
+    if (this.favorite) this.temp = this.favorite
   }
 
   confirmConfig () {
-    // configBoxDom.style.visibility = 'hidden'
-    const formData = new FormData(this.$refs.form as HTMLFormElement)
-    const name = formData.get('name')
-    const url = formData.get('url')
-    if (name && url) {
-      this.$emit('addFavorite', {
-        name, url
-      }, this.index)
-    }
-    this.$emit('bookmarkEdit', false)
+    this.callback(this.temp, true)
   }
 
   cancelConfig () {
-    this.$emit('bookmarkEdit', false)
+    this.callback(this.temp, false)
   }
 }
 </script>
 
 <style scoped lang="scss">
-form {
+div.center {
   color: white;
   width: 260px;
   height: 200px;

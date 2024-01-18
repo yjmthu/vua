@@ -12,6 +12,15 @@ a {
   color: inherit;
 }
 
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+svg.checked {
+  color: yellow;
+}
+
 .center {
   position: fixed;
   left: 50%;
