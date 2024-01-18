@@ -1,17 +1,23 @@
 <template>
   <aside ref="aside" :class="showSideBar? 'show' : 'hide'">
     <div id="wallpaper-buttons">
-      <SvgIcon name="Photo" size="16px" @click="toggleSideBar"/>
-      <SvgIcon id="favoriteStar" name="Star" size="16px" :class="{checked: isFavorite()}" @click="toggleFavorite"/>
+      <span class="tooltip" data-tooltip="打开侧边面板">
+        <SvgIcon name="Photo" size="16px" @click="toggleSideBar"/>
+      </span>
+      <span class="tooltip" data-tooltip="收藏当前背景">
+        <SvgIcon name="Star" size="16px" :class="{checked: isFavorite()}" @click="toggleFavorite"/>
+      </span>
+      <span class="tooltip" data-tooltip="切换当前背景">
       <SvgIcon name="ArrowPath" size="16px" @click="setWallpaper"/>
+      </span>
     </div>
     <nav>
       <h2>Vua New Tab</h2>
       <div id="sidebar-buttons">
-        <button @click="login">登录</button>
-        <button @click="update">刷新</button>
-        <button @click="deploy">部署</button>
-        <button @click="config">书签</button>
+        <button @click="login" class="tooltip" data-tooltip="登录清华云盘">登录</button>
+        <button @click="update" class="tooltip" data-tooltip="刷新显示云盘文件夹">刷新</button>
+        <button @click="deploy" class="tooltip" data-tooltip="使用当前文件夹下的图片文件作为背景">部署</button>
+        <button @click="config" class="tooltip" data-tooltip="在当前文件夹下存放书签">书签</button>
       </div>
       <h3>云盘数据</h3>
       <small>{{ currentFolder }}</small>
@@ -620,7 +626,14 @@ h2 {
   align-items: center;
   justify-content: center;
 
-  & > svg {
+  span {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+  }
+
+  svg {
     padding: 6px;
 
     border-radius: 14px;

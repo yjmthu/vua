@@ -21,6 +21,36 @@ svg.checked {
   color: yellow;
 }
 
+.tooltip {
+  position: relative;
+}
+
+.tooltip::before {
+  position: absolute;
+  left: -20px;
+  display: block;
+  content: attr(data-tooltip);
+  font-size: 12px;
+  background: #33333394;
+  margin-top: 32px;
+  padding: 4px 2px;
+  width: 120px;
+  border-radius: 4px;
+  z-index: 99;
+  text-align: center;
+  color: #fff;
+  transition: opacity 0.25s, transform 0.25s;
+  border: 1px solid #409eff;
+}
+
+.tooltip::before {
+  visibility: hidden;
+}
+
+.tooltip:hover::before {
+  visibility: visible;
+}
+
 .center {
   position: fixed;
   left: 50%;
