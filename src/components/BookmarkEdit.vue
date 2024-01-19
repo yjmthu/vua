@@ -1,9 +1,7 @@
 <template>
   <div class="center">
     <SvgIcon name="XCircle" size="20px" className="close-button" @click="cancelConfig"/>
-    <h4>
-      <span>书签编辑</span>
-    </h4>
+    <h4><span>书签编辑</span></h4>
     <div>
       <span>名称</span>
       <input type="text" name="name" v-model="temp.name">
@@ -11,6 +9,10 @@
     <div>
       <span>链接</span>
       <input type="url" name="url" v-model="temp.url">
+    </div>
+    <div v-if="isDirectLink()">
+      <span>图标</span>
+      <input type="url" name="icon" v-model="(temp as DirectLink).icon">
     </div>
     <div>
       <button type="button" @click="cancelConfig">取消</button>
@@ -22,7 +24,7 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
-import { FavoriteBookmark } from '@/utils/typedef'
+import { FavoriteBookmark, DirectLink } from '@/utils/typedef'
 
 @Options({
   components: {
@@ -33,24 +35,30 @@ import { FavoriteBookmark } from '@/utils/typedef'
   ]
 })
 export default class BookmarkEdit extends Vue {
-  favorite!: FavoriteBookmark | null
-  temp: FavoriteBookmark = {
+  favorite!: FavoriteBookmark | DirectLink | null
+  temp: FavoriteBookmark | DirectLink = {
     name: '',
     url: ''
   }
 
-  callback!: (data: FavoriteBookmark, isEdit: boolean) => void
+  callback!: (data: FavoriteBookmark | DirectLink | null) => void
 
   mounted (): void {
-    if (this.favorite) this.temp = this.favorite
+    if (this.favorite) {
+      this.temp = this.favorite
+    }
+  }
+
+  isDirectLink () {
+    return 'icon' in this.temp
   }
 
   confirmConfig () {
-    this.callback(this.temp, true)
+    this.callback(this.temp)
   }
 
   cancelConfig () {
-    this.callback(this.temp, false)
+    this.callback(null)
   }
 }
 </script>
@@ -59,7 +67,6 @@ export default class BookmarkEdit extends Vue {
 div.center {
   color: white;
   width: 260px;
-  height: 200px;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -80,7 +87,7 @@ div.center {
 }
 
 h4 {
-  margin: 10px 0 12px;
+  margin: 0;
   padding: 2px;
 }
 
@@ -104,7 +111,7 @@ button {
 }
 
 .close-button {
-  border-radius: 10px;
+  border-radius: 50%;
   cursor: pointer;
   position: absolute;
   display: inline-block;

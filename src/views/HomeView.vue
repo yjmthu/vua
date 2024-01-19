@@ -1,9 +1,9 @@
 <template>
   <div id="main">
     <div id="logo" @click="toggleFavrotite"></div>
-    <DirectLinks/>
+    <DirectLinks ref="directLinks"/>
     <SearchBox/>
-    <FavoriteBox v-show="showFavorite" @toggleVisbility="toggleFavrotite"/>
+    <FavoriteBox v-show="showFavorite" @toggleVisbility="toggleFavrotite" @updateDirectLinks="updateDirectLinks"/>
     <SideBar></SideBar>
   </div>
 </template>
@@ -26,6 +26,10 @@ import DirectLinks from '@/components/DirectLinks.vue'
 })
 export default class HomeView extends Vue {
   showFavorite = false
+
+  updateDirectLinks () {
+    (this.$refs.directLinks as DirectLinks).readDirectLinks()
+  }
 
   toggleFavrotite () {
     this.showFavorite = !this.showFavorite

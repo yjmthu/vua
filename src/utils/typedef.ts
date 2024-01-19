@@ -5,8 +5,8 @@ interface FavoriteBookmark {
   url: string
 }
 
-interface FavoriteLink {
-  text: string
+interface DirectLink {
+  name: string
   url: string
   icon: string
   color: string
@@ -22,6 +22,7 @@ interface BookmarkSync {
 interface SyncData {
   favorite: FavoriteBookmark[]
   bookmark: chrome.bookmarks.BookmarkTreeNode
+  directLinks: DirectLink[] | null
 }
 
 async function checkBookmark (sync: BookmarkSync) {
@@ -64,4 +65,4 @@ async function downloadBookmark (sync: BookmarkSync): Promise<SyncData> {
   }
 }
 
-export { FavoriteBookmark, BookmarkSync, FavoriteLink, checkBookmark, uploadBookmark, downloadBookmark }
+export { FavoriteBookmark, BookmarkSync, DirectLink, checkBookmark, uploadBookmark, downloadBookmark }

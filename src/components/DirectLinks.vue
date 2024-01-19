@@ -1,9 +1,9 @@
 <template>
   <ul class="row-center">
-    <li v-for="(item, index) in links" :key="index">
+    <li v-for="(item, index) in directLinks" :key="index" @contextmenu.prevent="showBookmarkEdit(index)">
       <a :href="item.url" target="_blank">
         <img :src="item.icon" :style="{'background-color': item.color}"/>
-        <div>{{ item.text }}</div>
+        <div>{{ item.name }}</div>
       </a>
     </li>
   </ul>
@@ -11,59 +11,96 @@
 
 <script lang="ts">
 import { Vue } from 'vue-class-component'
-import { FavoriteLink } from '@/utils/typedef'
+import { DirectLink } from '@/utils/typedef'
+import { App, createApp } from 'vue'
+import BookmarkEdit from './BookmarkEdit.vue'
 
 export default class DirectLinks extends Vue {
-  public links: FavoriteLink[] = [
+  public directLinks: DirectLink[] = [
     {
-      text: '网络学堂',
+      name: '网络学堂',
       url: 'https://learn.tsinghua.edu.cn/f/login/',
       icon: 'https://files.codelife.cc/user-website-icon/20230603/fD9TA2ag2A0LgqPa7a3va9996.jpeg?x-oss-process=image/resize,limit_0,m_fill,w_100,h_100/quality,q_92/format,webp',
       color: '#ffffff'
     },
     {
-      text: '信息门户',
+      name: '信息门户',
       url: 'http://info.tsinghua.edu.cn/',
       icon: 'https://files.codelife.cc/website/5bec1fed649fb56180c8d908.png?x-oss-process=image/resize,limit_0,m_fill,w_100,h_100/quality,q_92/format,webp',
       color: '#ffffff'
     },
     {
-      text: '腾讯视频',
+      name: '腾讯视频',
       url: 'http://v.qq.com/',
       icon: 'https://files.codelife.cc/icons/qqvideo.svg',
       color: '#ffffff'
     },
     {
-      text: '哔哩哔哩',
+      name: '哔哩哔哩',
       url: 'http://www.bilibili.com/',
       icon: 'https://files.codelife.cc/icons/bilibili2.svg',
       color: '#fe65a6'
     },
     {
-      text: 'GitHub',
+      name: 'GitHub',
       url: 'https://github.com',
       icon: 'https://files.codelife.cc/icons/github.svg',
       color: 'black'
     },
     {
-      text: '知乎',
+      name: '知乎',
       url: 'https://www.zhihu.com',
       icon: 'https://files.codelife.cc/icons/zhihu.svg',
       color: '#0c6dfe'
     },
     {
-      text: 'Wikipedia',
+      name: 'Wikipedia',
       url: 'https://en.wikipedia.org',
       icon: 'https://files.codelife.cc/icons/wikipedia.svg',
       color: 'black'
     },
     {
-      text: 'Wallhaven',
+      name: 'Wallhaven',
       url: 'https://wallhaven.cc',
       icon: 'https://files.codelife.cc/icons/wallhave.svg',
       color: '#0c4061'
     }
   ]
+
+  readDirectLinks () {
+    const data = localStorage.getItem('directLinks')
+    if (data) {
+      this.directLinks = JSON.parse(data) as DirectLink[]
+    } else {
+      this.writeDirectLinks()
+    }
+  }
+
+  writeDirectLinks () {
+    localStorage.setItem('directLinks', JSON.stringify(this.directLinks))
+  }
+
+  mounted () {
+    this.readDirectLinks()
+  }
+
+  showBookmarkEdit (index: number) {
+    const favorite = this.directLinks[index]
+    const div = document.createElement('div')
+    document.body.appendChild(div)
+    div.style.position = 'fixed'
+    let bookmarkEdit: App<Element> | null = null
+    const callback = (data: DirectLink | null) => {
+      if (data) {
+        this.directLinks[index] = data
+        this.writeDirectLinks()
+      }
+      bookmarkEdit?.unmount()
+      document.body.removeChild(div)
+    }
+    bookmarkEdit = createApp(BookmarkEdit, { favorite, callback })
+    bookmarkEdit.mount(div)
+  }
 }
 </script>
 

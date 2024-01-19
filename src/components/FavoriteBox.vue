@@ -163,9 +163,11 @@ export default class FavoriteBox extends Vue {
       alert('上传失败，书签数据错误！')
       return
     }
+    const directLinks = localStorage.getItem('directLinks')
     await uploadBookmark(JSON.stringify({
       bookmark: this.bookmarkDirStack[0],
-      favorite: this.favoriteBookmark
+      favorite: this.favoriteBookmark,
+      directLinks: directLinks ? JSON.parse(directLinks) : null
     }), sync, true)
     alert('上传书签成功！')
   }
@@ -195,6 +197,10 @@ export default class FavoriteBox extends Vue {
       alert('下载书签失败！')
       return
     }
+    if (data.directLinks) {
+      localStorage.setItem('directLinks', JSON.stringify(data.directLinks))
+      this.$emit('updateDirectLinks')
+    }
     const rootId = await this.clearBookmarks()
     console.log('清空书签成功！')
     this.currentNode = data.bookmark
@@ -210,13 +216,12 @@ export default class FavoriteBox extends Vue {
     const favorite = index > 0 ? this.favoriteBookmark[index] : null
     // create 'bookmark-edit' element
     const div = document.createElement('div')
-    div.id = 'bookmark-edit'
     div.style.position = 'absolute'
     div.style.zIndex = '1000'
     document.body.appendChild(div)
     let bookmarkEdit: App<Element> | null = null
-    const callback = (data: FavoriteBookmark, isEdit: boolean) => {
-      if (isEdit) {
+    const callback = (data: FavoriteBookmark | null) => {
+      if (data !== null) {
         if (favorite) {
           this.favoriteBookmark[index] = data
         } else {
@@ -230,7 +235,7 @@ export default class FavoriteBox extends Vue {
     }
     bookmarkEdit = createApp(BookmarkEdit, { favorite, callback })
     // mount it on an element
-    bookmarkEdit.mount('#bookmark-edit')
+    bookmarkEdit.mount(div)
   }
 }
 </script>
