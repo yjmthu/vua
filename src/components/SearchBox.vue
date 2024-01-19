@@ -43,6 +43,19 @@ export default class SearchBox extends Vue {
     currentEngineIndex: 0
   }
 
+  get currentEngineIndex () {
+    return this.enginesData.currentEngineIndex
+  }
+
+  set currentEngineIndex (index: number) {
+    this.enginesData.currentEngineIndex = index
+    this.$emit('engineChanged', this.engineLogoName())
+  }
+
+  engineLogoName () {
+    return engines[this.enginesData.currentEngineIndex].logo
+  }
+
   get currentEngine () {
     return engines[this.enginesData.currentEngineIndex]
   }
@@ -51,11 +64,12 @@ export default class SearchBox extends Vue {
     const tmp = localStorage.getItem('enginesData')
     if (tmp) {
       this.enginesData = JSON.parse(tmp)
+      this.$emit('engineChanged', this.engineLogoName())
     }
   }
 
   setEngineIndex (index: number) {
-    this.enginesData.currentEngineIndex = index
+    this.currentEngineIndex = index
     const input = document.getElementById('search-input') as HTMLInputElement | null
     if (input) this.getSuggests(input)
     localStorage.setItem('enginesData', JSON.stringify(this.enginesData))
@@ -64,16 +78,16 @@ export default class SearchBox extends Vue {
 
   shiftEngine (forward: boolean) {
     if (forward) {
-      if (this.enginesData.currentEngineIndex + 1 >= engines.length) {
-        this.enginesData.currentEngineIndex = 0
+      if (this.currentEngineIndex + 1 >= engines.length) {
+        this.currentEngineIndex = 0
       } else {
-        ++this.enginesData.currentEngineIndex
+        ++this.currentEngineIndex
       }
     } else {
-      if (this.enginesData.currentEngineIndex === 0) {
-        this.enginesData.currentEngineIndex = engines.length - 1
+      if (this.currentEngineIndex === 0) {
+        this.currentEngineIndex = engines.length - 1
       } else {
-        --this.enginesData.currentEngineIndex
+        --this.currentEngineIndex
       }
     }
     localStorage.setItem('enginesData', JSON.stringify(this.enginesData))

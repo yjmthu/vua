@@ -1,8 +1,8 @@
 <template>
   <div id="main">
-    <div id="logo" @click="toggleFavrotite"></div>
+    <div id="logo" ref="logo" @click="toggleFavrotite"></div>
     <DirectLinks ref="directLinks"/>
-    <SearchBox/>
+    <SearchBox @engineChanged="changeEngineLogo"/>
     <FavoriteBox v-show="showFavorite" @toggleVisbility="toggleFavrotite" @updateDirectLinks="updateDirectLinks"/>
     <SideBar></SideBar>
   </div>
@@ -34,17 +34,22 @@ export default class HomeView extends Vue {
   toggleFavrotite () {
     this.showFavorite = !this.showFavorite
   }
+
+  changeEngineLogo (logoName: string) {
+    const logo = this.$refs.logo as HTMLElement
+    logo.style.backgroundImage = `url(./icons/${logoName}.svg)`
+  }
 }
 </script>
 
 <style scoped lang="scss">
 #logo {
   width: 360px;
-  height: 60px;
+  height: 120px;
   margin-bottom: 20px;
-  background-image: url(../assets/icons/microsoft.svg);
-  background-size: cover;
-  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: bottom;
 }
 
 #main {
