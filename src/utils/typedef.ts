@@ -19,46 +19,36 @@ interface BookmarkSync {
   fileName: string
 }
 
-function checkBookmark (sync: BookmarkSync, callback: (exsist: boolean) => void) {
+interface SyncData {
+  favorite: FavoriteBookmark[]
+  bookmark: chrome.bookmarks.BookmarkTreeNode
+}
+
+async function checkBookmark (sync: BookmarkSync) {
   // https://cloud.seafile.com/api2/repos/{repo-id}/file/detail/?p=/foo.c
   // Get File Detail
   const link = `${sync.host}/api2/repos/${sync.repoId}/file/detail/?p=${encodeURIComponent(sync.folder + '/' + sync.fileName)}`
-  axios.get(link).then((res) => {
-    callback(res.data && res.data.type === 'file')
-  }).catch((err) => {
-    const result = false
-    callback(result)
-    console.log(err)
-  })
+  const res = await axios.get(link)
+  return (res?.data && res.data?.type === 'file')
 }
 
-function uploadBookmark (bookmarks: string, sync: BookmarkSync, overwrite: boolean) {
+async function uploadBookmark (syncData: string, sync: BookmarkSync, overwrite: boolean) {
   // https://cloud.seafile.com/api2/repos/{repo-id}/upload-link/?p=/upload-dir
   // Get Upload Link
   const link = `${sync.host}/api2/repos/${sync.repoId}/upload-link/?p=${encodeURIComponent(sync.folder)}`
-  axios.get(link).then((res) => {
-    const uploadLink = res.data
-    if (!uploadLink) return
-    const data = new FormData()
-    const fileName = sync.fileName
-    data.append('file', new Blob([bookmarks], { type: 'application/json' }), fileName)
-    data.append('parent_dir', sync.folder)
-    data.append('replace', overwrite ? '1' : '0')
-    axios.post(uploadLink, data).then((res) => {
-      if (!res.data) return
-      alert('上传成功！')
-    }).catch((err) => {
-      console.log(err)
-      alert('上传失败！')
-    })
-  }).catch((err) => {
-    console.log(err)
-    // error_msg
-    alert('无法获取上传文件！')
-  })
+  const uploadLink = (await axios.get(link))?.data
+  if (!uploadLink) throw new Error('无法获取上传链接！')
+  const data = new FormData()
+  const fileName = sync.fileName
+  data.append('file', new Blob([syncData], { type: 'application/json' }), fileName)
+  data.append('parent_dir', sync.folder)
+  data.append('replace', overwrite ? '1' : '0')
+
+  const res2 = await axios.post(uploadLink, data)
+  if (!res2.data) throw new Error('上传文件失败！')
 }
 
-function downloadBookmark (sync: BookmarkSync, callback: (bookmarks: {favorite: FavoriteBookmark[], bookmark: chrome.bookmarks.BookmarkTreeNode}) => void) {
+async function downloadBookmark (sync: BookmarkSync): Promise<SyncData> {
   // https://cloud.tsinghua.edu.cn/lib/ecf780d7-98ca-48ce-abf0-290cab3abece/file/{folder}/vua.bookmarks.json?dl=1
 
   // Get File Download Link
@@ -66,12 +56,12 @@ function downloadBookmark (sync: BookmarkSync, callback: (bookmarks: {favorite: 
   const p = nameList.map((name) => encodeURIComponent(name)).join('/')
 
   const link = `${sync.host}/lib/${sync.repoId}/file${p}?dl=1`
-  axios.get(link).then((res) => {
-    if (res.status === 200) callback(res.data)
-    else alert('状态码错误！')
-  }).catch((err) => {
-    console.log(err)
-  })
+  const res = await axios.get(link)
+  if (res.status === 200) {
+    return res.data
+  } else {
+    throw new Error('状态码错误！')
+  }
 }
 
 export { FavoriteBookmark, BookmarkSync, FavoriteLink, checkBookmark, uploadBookmark, downloadBookmark }

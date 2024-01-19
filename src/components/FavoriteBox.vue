@@ -135,34 +135,25 @@ export default class FavoriteBox extends Vue {
     return JSON.parse(syncString) as BookmarkSync
   }
 
-  clearBookmarks (callback: (rootId: string) => void) {
-    chrome.bookmarks.getTree((bookmarkArray) => {
-      const allBookmarks = bookmarkArray[0]?.children
-      if (allBookmarks && allBookmarks.length) {
-        const rootId = allBookmarks[0].id
-        const roots = allBookmarks[0].children
-        if (!roots || !roots.length) {
-          callback(rootId)
-          return
-        }
-        let size = roots.length
-        for (const node of roots) {
-          chrome.bookmarks.removeTree(node.id).then(() => {
-            size -= 1
-            if (!size) {
-              callback(rootId)
-            }
-          }).catch((err) => {
-            console.log(err)
-          })
-        }
-      } else {
-        alert('无法获取默认书签文件夹！')
+  async clearBookmarks () {
+    const bookmarkArray = await chrome.bookmarks.getTree()
+    const allBookmarks = bookmarkArray[0]?.children
+    if (allBookmarks && allBookmarks.length) {
+      const rootId = allBookmarks[0].id
+      const roots = allBookmarks[0].children
+      if (!roots || !roots.length) {
+        return rootId
       }
-    })
+      for (const node of roots) {
+        await chrome.bookmarks.removeTree(node.id)
+      }
+      return rootId
+    } else {
+      throw new Error('无法获取默认书签文件夹！')
+    }
   }
 
-  uploadBookmarks () {
+  async uploadBookmarks () {
     const sync = this.getBookmarkSync()
     if (!sync) {
       alert('同步失败，未选择云端存储位置！')
@@ -172,50 +163,47 @@ export default class FavoriteBox extends Vue {
       alert('上传失败，书签数据错误！')
       return
     }
-    uploadBookmark(JSON.stringify({
+    await uploadBookmark(JSON.stringify({
       bookmark: this.bookmarkDirStack[0],
       favorite: this.favoriteBookmark
     }), sync, true)
+    alert('上传书签成功！')
   }
 
-  addBookmark (parentId: string, node: chrome.bookmarks.BookmarkTreeNode) {
-    chrome.bookmarks.create({
+  async addBookmark (parentId: string, node: chrome.bookmarks.BookmarkTreeNode) {
+    const newNode = await chrome.bookmarks.create({
       parentId,
       title: node.title,
       url: node.url
-    }, (newNode) => {
-      if (node.children) {
-        for (const child of node.children) {
-          this.addBookmark(newNode.id, child)
-        }
-      }
     })
+    if (node.children) {
+      for (const child of node.children) {
+        await this.addBookmark(newNode.id, child)
+      }
+    }
   }
 
-  downloadBookmarks () {
+  async downloadBookmarks () {
     const sync = this.getBookmarkSync()
     if (!sync) return
 
-    downloadBookmark(sync, (data) => {
-      if (data.bookmark && data.favorite) {
-        this.writeFavoriteBookmarks(data.favorite)
-        this.favoriteBookmark = data.favorite
-        console.log('下载书签成功！')
-      } else {
-        alert('下载书签失败！')
-        return
-      }
-      this.clearBookmarks((rootId: string) => {
-        console.log('清空书签成功！')
-        this.currentNode = data.bookmark
-        this.bookmarkDirStack = [this.currentNode]
-        const dataChilren = this.currentNode.children || []
-        for (const node of dataChilren) {
-          this.addBookmark(rootId, node)
-        }
-        console.log('创建书签成功！')
-      })
-    })
+    const data = await downloadBookmark(sync)
+    if (data.bookmark && data.favorite) {
+      this.writeFavoriteBookmarks(data.favorite)
+      this.favoriteBookmark = data.favorite
+    } else {
+      alert('下载书签失败！')
+      return
+    }
+    const rootId = await this.clearBookmarks()
+    console.log('清空书签成功！')
+    this.currentNode = data.bookmark
+    this.bookmarkDirStack = [this.currentNode]
+    const dataChilren = this.currentNode.children || []
+    for (const node of dataChilren) {
+      await this.addBookmark(rootId, node)
+    }
+    alert('下载书签成功！')
   }
 
   showBookmarkEdit (index: number) {

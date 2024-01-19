@@ -520,7 +520,7 @@ export default class SideBar extends Vue {
     this.startSchedule()
   }
 
-  config () {
+  async config () {
     if (!this.currentPath.length) {
       alert('请选择文件夹！')
       return
@@ -533,15 +533,14 @@ export default class SideBar extends Vue {
       fileName: 'vua.bookmarks.json'
     }
 
-    checkBookmark(bookmarkSync, (exsist: boolean) => {
-      // if (!exsist || confirm('该文件夹下已存在书签文件，是否覆盖？')) {
-      //   let bookmarks = localStorage.getItem('bookmarks')
-      //   if (!bookmarks) bookmarks = '[]'
-      //   uploadBookmark(bookmarks, bookmarkSync, true)
-      // }
-      // localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
-      alert(`云端状态：${exsist ? '已存在书签文件！' : '不存在书签文件！'}`)
-    })
+    const exsist = await checkBookmark(bookmarkSync)
+    alert(`云端状态：${exsist ? '已存在书签文件！' : '不存在书签文件！'}`)
+    // if (!exsist || confirm('该文件夹下已存在书签文件，是否覆盖？')) {
+    //   let bookmarks = localStorage.getItem('bookmarks')
+    //   if (!bookmarks) bookmarks = '[]'
+    //   uploadBookmark(bookmarks, bookmarkSync, true)
+    // }
+    // localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
   }
 
   setWallpaper () {
