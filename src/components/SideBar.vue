@@ -538,9 +538,9 @@ export default class SideBar extends Vue {
     // if (!exsist || confirm('该文件夹下已存在书签文件，是否覆盖？')) {
     //   let bookmarks = localStorage.getItem('bookmarks')
     //   if (!bookmarks) bookmarks = '[]'
-    //   uploadBookmark(bookmarks, bookmarkSync, true)
+    //   // uploadBookmark(bookmarks, bookmarkSync, true)
     // }
-    // localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
+    localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
   }
 
   setWallpaper () {
