@@ -64,8 +64,8 @@ export default class SearchBox extends Vue {
     const tmp = localStorage.getItem('enginesData')
     if (tmp) {
       this.enginesData = JSON.parse(tmp)
-      this.$emit('engineChanged', this.engineLogoName())
     }
+    this.$emit('engineChanged', this.engineLogoName())
   }
 
   setEngineIndex (index: number) {
