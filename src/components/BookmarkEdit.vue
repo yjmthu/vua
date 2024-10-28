@@ -14,6 +14,10 @@
       <span>图标</span>
       <input type="url" name="icon" v-model="(temp as DirectLink).icon">
     </div>
+    <div v-if="isDirectLink()">
+      <span>背景色</span>
+      <input type="text" name="color" v-model="(temp as DirectLink).color">
+    </div>
     <div>
       <button type="button" @click="cancelConfig">取消</button>
       <button type="button" @click="confirmConfig">确定</button>
@@ -66,7 +70,7 @@ export default class BookmarkEdit extends Vue {
 <style scoped lang="scss">
 div.center {
   color: white;
-  width: 260px;
+  width: 270px;
   padding: 20px;
   display: flex;
   flex-direction: column;

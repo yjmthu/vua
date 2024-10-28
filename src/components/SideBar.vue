@@ -517,6 +517,7 @@ export default class SideBar extends Vue {
     })
     */
     localStorage.setItem('deployData', JSON.stringify(this.deployData))
+    alert('部署成功！')
     this.startSchedule()
   }
 
@@ -534,13 +535,13 @@ export default class SideBar extends Vue {
     }
 
     const exsist = await checkBookmark(bookmarkSync)
-    alert(`云端状态：${exsist ? '已存在书签文件！' : '不存在书签文件！'}`)
     // if (!exsist || confirm('该文件夹下已存在书签文件，是否覆盖？')) {
     //   let bookmarks = localStorage.getItem('bookmarks')
     //   if (!bookmarks) bookmarks = '[]'
     //   // uploadBookmark(bookmarks, bookmarkSync, true)
     // }
     localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
+    alert(`设置书签位置成功！\n云端状态：${exsist ? '已存在书签文件！' : '不存在书签文件！'}`)
   }
 
   setWallpaper () {
