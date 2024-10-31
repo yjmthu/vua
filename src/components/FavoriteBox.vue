@@ -113,7 +113,7 @@ export default class FavoriteBox extends Vue {
   }
 
   mounted (): void {
-    chrome.bookmarks.getTree((bookmarkArray) => {
+    chrome.bookmarks?.getTree((bookmarkArray) => {
       const allBookmarks = bookmarkArray[0]?.children
       if (allBookmarks && allBookmarks.length) {
         this.currentNode = allBookmarks[0]

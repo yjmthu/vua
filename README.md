@@ -7,7 +7,8 @@
 ## Project setup
 
 ```
-npm install
+npm install -g @vue/cli
+npm install --force
 ```
 
 ### Compiles and hot-reloads for development

@@ -36,6 +36,7 @@ export default class HomeView extends Vue {
   }
 
   changeEngineLogo (logoName: string) {
+    console.log(`changeEngineLogo: ${logoName}`)
     const logo = this.$refs.logo as HTMLElement
     logo.style.backgroundImage = `url(./icons/${logoName}.svg)`
   }

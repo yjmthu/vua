@@ -103,22 +103,16 @@ interface ScheduleData {
 
 function getFavoriteImageList () {
   const imagesForMobile = [
-    'fa29af52426942c88ba5',
-    'c627eba4d93e40e49b37',
-    '17bd938fab0f4e6aa42b',
-    '75dc4b8021b5479590bf',
-    'd9e60063f1da45dbada6',
-    'a8ead1efd05e44d19a0b',
-    'f48d199c141a458db9d7'
+    '11ae1f71e1c14962a0c1',
+    'ad25a52909ef4dba8f39',
+    '9fc84199af59450bb4ef',
+    '1ef738b0491f453f8af2'
   ]
   const imagesForPC = [
-    '805e90f9963d4547985a',
-    '2d9fabd26a7b4163b770',
-    'cdf726e5d5e44a85982e',
-    '014e257f8d4d428b98f6',
-    '80eb15b257574159a9e4',
-    '9f9b4899305f40cf8d6a',
-    '542dd08d0a3f40a39970'
+    '9362495c22c94187acae',
+    '648b8c9b579a4682a851',
+    '061f88443278449d9150',
+    '6e222049b9954218bf07'
   ]
   const images = (window.innerWidth >= 720) ? imagesForPC : imagesForMobile
   return images.map((item) => `https://cloud.tsinghua.edu.cn/f/${item}/?dl=1`)
