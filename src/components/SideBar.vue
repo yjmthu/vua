@@ -72,6 +72,7 @@ import { Vue, Options } from 'vue-class-component'
 import SvgIcon from '@/components/SvgIcon.vue'
 import { BookmarkSync, checkBookmark } from '@/utils/typedef'
 import axios from 'axios'
+import HugeStorage from '@/utils/storage'
 
 interface FolderContent {
   name: string
@@ -142,6 +143,8 @@ export default class SideBar extends Vue {
     interval: 300,
     intervalUnit: 'second'
   }
+
+  storage = new HugeStorage('backgroundImage')
 
   icons: Icons = {
     dir: 'Folder',
@@ -329,10 +332,23 @@ export default class SideBar extends Vue {
     }
   }
 
-  setBackgroundImage (url: string) {
+  async setBackgroundImage (url: string) {
     const app = document.getElementById('app')
     if (!app) return
-    app.style.backgroundImage = `url(${url})`
+
+    if (!chrome.runtime) {
+      app.style.backgroundImage = `url(${url})`
+    } else {
+      console.log('Set background image:', url)
+
+      const blob = await this.storage.addUrl(url)
+      if (!blob) {
+        console.error('Failed to get blob from url:', url)
+        return
+      }
+      const newUrl = URL.createObjectURL(blob)
+      app.style.backgroundImage = `url(${newUrl})`
+    }
     this.scheduleData.currentImage = url
     this.saveScheduleData()
   }
