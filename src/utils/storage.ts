@@ -17,7 +17,6 @@ class HugeStorage {
 
       request.onupgradeneeded = (event) => {
         const target = event.target as IDBOpenDBRequest
-        console.log('onupgradeneeded')
         const db = target.result as IDBDatabase
         if (!db.objectStoreNames.contains(this.storeName)) {
           console.log('Creating object store')
@@ -38,14 +37,9 @@ class HugeStorage {
     })
   }
 
-  isReady () {
-    return !!this.db
-  }
-
   async getStore () {
     if (this.db === undefined) {
       this.db = await this.openIndexedDB()
-      return null
     }
     return this.db.transaction([this.storeName], 'readwrite').objectStore(this.storeName)
   }
@@ -105,14 +99,15 @@ class HugeStorage {
     })
   }
 
-  async getDataFromIndexedDB (id: string): Promise<Blob | null> {
+  async getDataFromIndexedDB (key: string): Promise<Blob | null> {
     const store = await this.getStore()
     if (!store) return null
 
     return await new Promise((resolve, reject) => {
-      const request = store.get(id)
+      const request = store.get(key)
       request.onsuccess = (event) => {
-        resolve((event.target as IDBRequest).result)
+        const target = event.target as IDBRequest
+        resolve(target.result.blob)
       }
 
       request.onerror = () => {
@@ -124,12 +119,14 @@ class HugeStorage {
   async getAllIdFromIndexedDB () {
     const store = await this.getStore()
     if (!store) {
+      console.log('无法打卡本地store!')
       return []
     }
     return await new Promise<string[]>((resolve, reject) => {
       const request = store.getAll()
-      request.onsuccess = () => {
-        resolve(request.result.map((item) => item.id))
+      request.onsuccess = (event) => {
+        const target = event.target as IDBRequest
+        resolve(target.result.map((item: any) => item[this.keyPath]))
       }
       request.onerror = () => {
         reject(new Error('Failed to get all id from indexedDB'))

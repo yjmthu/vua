@@ -339,7 +339,7 @@ export default class SideBar extends Vue {
     if (!chrome.runtime) {
       app.style.backgroundImage = `url(${url})`
     } else {
-      console.log('Set background image:', url)
+      // console.log('Set background image:', url)
 
       const blob = await this.storage.addUrl(url)
       if (!blob) {
