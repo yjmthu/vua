@@ -1,5 +1,10 @@
 // let db: IDBDatabase | null = null
 
+interface BackImage {
+  url: string
+  blob: Blob
+}
+
 class HugeStorage {
   databaseName = 'imageDB'
   version = 1
@@ -55,7 +60,7 @@ class HugeStorage {
     //   })
     // })
 
-    const urls = await this.getAllIdFromIndexedDB()
+    const urls = await this.getAllKeyFromIndexedDB()
     if (urls.includes(url)) {
       return this.getDataFromIndexedDB(url)
     }
@@ -69,10 +74,8 @@ class HugeStorage {
     const blob = await response.blob()
     const store = await this.getStore()
     if (!store) return blob
-    const imageEntry: any = { blob }
-    imageEntry[this.keyPath] = url
+    const imageEntry: BackImage = { blob, url }
     const request = store.put(imageEntry)
-    // const request = store.put(blob, url)
     return await new Promise<Blob>((resolve, reject) => {
       request.onsuccess = () => {
         resolve(blob)
@@ -116,7 +119,7 @@ class HugeStorage {
     })
   }
 
-  async getAllIdFromIndexedDB () {
+  async getAllKeyFromIndexedDB () {
     const store = await this.getStore()
     if (!store) {
       console.log('无法打卡本地store!')
@@ -126,7 +129,7 @@ class HugeStorage {
       const request = store.getAll()
       request.onsuccess = (event) => {
         const target = event.target as IDBRequest
-        resolve(target.result.map((item: any) => item[this.keyPath]))
+        resolve(target.result.map((item: BackImage) => item.url))
       }
       request.onerror = () => {
         reject(new Error('Failed to get all id from indexedDB'))
