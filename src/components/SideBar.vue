@@ -70,7 +70,7 @@
 
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { FileDetail, FilePosition, getFileDetail } from '@/utils/typedef'
+import { FilePosition, getFileDetail } from '@/utils/typedef'
 import axios from 'axios'
 import HugeStorage from '@/utils/storage'
 
