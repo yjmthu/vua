@@ -1,9 +1,13 @@
 <template>
   <div id="main">
     <div id="logo" ref="logo" @click="toggleFavrotite"></div>
-    <DirectLinks ref="directLinks"/>
-    <SearchBox @engineChanged="changeEngineLogo"/>
-    <FavoriteBox v-show="showFavorite" @toggleVisbility="toggleFavrotite" @updateDirectLinks="updateDirectLinks"/>
+    <DirectLinks ref="directLinks"
+      :tabAsync="tabAsync"/>
+    <SearchBox
+      @engineChanged="changeEngineLogo"/>
+    <FavoriteBox v-show="showFavorite"
+      :tabAsync="tabAsync"
+      @toggleVisbility="toggleFavrotite" @updateDirectLinks="updateDirectLinks"/>
     <SideBar></SideBar>
   </div>
 </template>
@@ -15,6 +19,7 @@ import SideBar from '@/components/SideBar.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import FavoriteBox from '@/components/FavoriteBox.vue'
 import DirectLinks from '@/components/DirectLinks.vue'
+import TabAsync from '@/utils/tabsync'
 
 @Options({
   components: {
@@ -26,6 +31,7 @@ import DirectLinks from '@/components/DirectLinks.vue'
 })
 export default class HomeView extends Vue {
   showFavorite = false
+  tabAsync = new TabAsync()
 
   updateDirectLinks () {
     (this.$refs.directLinks as DirectLinks).readDirectLinks()
@@ -36,7 +42,7 @@ export default class HomeView extends Vue {
   }
 
   changeEngineLogo (logoName: string) {
-    console.log(`changeEngineLogo: ${logoName}`)
+    // console.log(`changeEngineLogo: ${logoName}`)
     const logo = this.$refs.logo as HTMLElement
     logo.style.backgroundImage = `url(./icons/${logoName}.svg)`
   }

@@ -1,56 +1,80 @@
+interface TabMessage {
+  name: string
+  data?: number | string
+}
+
+interface CallBack {
+  [key: string]: () => void
+}
+
 class TabAsync {
   static channelName = 'tab-async'
-  channel: BroadcastChannel
+  private _channel: BroadcastChannel
 
+  callbacks: CallBack = {}
   otherTabCount = 0
   tabId = 0
 
   constructor () {
-    this.channel = new BroadcastChannel(TabAsync.channelName)
-    this.channel.postMessage('OPEN_TAB')
-    this.channel.onmessage = this.onMessage.bind(this)
+    this._channel = new BroadcastChannel(TabAsync.channelName)
+    this.postMessage({ name: 'OPEN_TAB' })
+    this._channel.onmessage = this.onMessage.bind(this)
 
     window.onbeforeunload = () => {
       this.destroy()
     }
   }
 
+  postMessage (message: TabMessage) {
+    this._channel.postMessage(message)
+  }
+
   isMaster () {
     return this.tabId === 0
   }
 
+  addListener (name: string, callback: () => void) {
+    this.callbacks[name] = callback
+  }
+
   becomeMaster () {
-    this.channel.postMessage(`MASTER ${this.tabId}`)
+    this.postMessage({ name: 'REQUEST_MASTER', data: this.tabId })
     this.tabId = 0
   }
 
   destroy () {
-    this.channel.postMessage(`CLOASE_TAB ${this.tabId}`)
-    this.channel.close()
+    this.postMessage({ name: 'CLOASE_TAB', data: this.tabId })
+    this._channel.close()
   }
 
   onMessage (event: MessageEvent) {
-    if (event.data === 'OPEN_TAB') {
+    const msg = event.data as TabMessage
+
+    if (msg.name === 'OPEN_TAB') {
       this.tabId += 1
       this.otherTabCount += 1
-      this.channel.postMessage('EXSIST_TAB')
+      this.postMessage({ name: 'EXSIST_TAB' })
       console.log('New tab opened', this.tabId)
-    } else if (event.data.startsWith('CLOASE_TAB')) {
-      const tabId = parseInt(event.data.split(' ')[1])
+    } else if (msg.name === 'CLOASE_TAB') {
+      const tabId = msg.data as number
       if (tabId < this.tabId) {
         this.tabId -= 1
       }
       console.log('Tab closed', this.tabId)
       this.otherTabCount -= 1
-    } else if (event.data.startsWith('MASTER')) {
+    } else if (msg.name === 'REQUEST_MASTER') {
       if (this.tabId === 0) {
-        this.tabId = parseInt(event.data.split(' ')[1])
+        this.tabId = msg.data as number
         console.log('Lost master', this.tabId)
       }
-    } else if (event.data === 'EXSIST_TAB') {
+    } else if (msg.name === 'EXSIST_TAB') {
       if (this.tabId === 0) {
         this.otherTabCount += 1
       }
+    }
+
+    if (this.callbacks[msg.name]) {
+      this.callbacks[msg.name]()
     }
   }
 }

@@ -11,7 +11,7 @@
         <a href="https://yjmthu.github.io/vua/vua.crx" target="_blank"><SvgIcon name="Extension" size="30px"/></a>
         <SvgIcon name="ArrowUpCircle" size="30px" @click="uploadBookmarks(true)"/>
         <SvgIcon name="ArrowDownCircle" size="30px" @click="downloadBookmarks"/>
-        <SvgIcon name="Trash" size="30px" :class="{ checked: isTrashMode }" @click="() => { isTrashMode = !isTrashMode }"></SvgIcon>
+        <SvgIcon name="Trash" size="30px" :class="{ checked: isTrashMode }" @click="switchTrashMode"></SvgIcon>
       </div>
     </nav>
     <ul v-if="currentTab == 0" id="favorite-bookmarks">
@@ -40,6 +40,9 @@ import { createApp, App } from 'vue'
   components: {
     SvgIcon,
     BookmarkEdit
+  },
+  props: {
+    tabAsync: TabAsync
   }
 })
 export default class FavoriteBox extends Vue {
@@ -47,7 +50,7 @@ export default class FavoriteBox extends Vue {
   bookmarkDirStack: chrome.bookmarks.BookmarkTreeNode[] = []
   rootNode: chrome.bookmarks.BookmarkTreeNode | null = null
   currentNode: chrome.bookmarks.BookmarkTreeNode | null = null
-  tabAsync = new TabAsync()
+  tabAsync!: TabAsync
   isTrashMode = false
   currentTab = 0
 
@@ -66,6 +69,7 @@ export default class FavoriteBox extends Vue {
 
   writeFavoriteBookmarks (data: FavoriteBookmark[]) {
     localStorage.setItem('bookmarks', JSON.stringify(data))
+    this.tabAsync.postMessage({ name: 'FAVORITE_CHANGE' })
   }
 
   enterNode (index: number) {
@@ -98,17 +102,32 @@ export default class FavoriteBox extends Vue {
     this.showBookmarkEdit(-1)
   }
 
+  favoriteChanged = false
   clickFavorite (index: number) {
     if (index < 0 || index >= this.favoriteBookmark.length) {
       return
     }
     if (this.isTrashMode) {
       this.favoriteBookmark.splice(index, 1)
+      this.favoriteChanged = true
     } else {
       // open url in new tab
       const url = this.favoriteBookmark[index].url
       window.open(url)
     }
+  }
+
+  switchTrashMode () {
+    if (this.isTrashMode) {
+      if (this.favoriteChanged) {
+        this.writeFavoriteBookmarks(this.favoriteBookmark)
+        this.uploadBookmarks()
+        this.favoriteChanged = false
+      }
+    } else {
+      this.favoriteChanged = false
+    }
+    this.isTrashMode = !this.isTrashMode
   }
 
   loadBookmarks () {
@@ -130,7 +149,7 @@ export default class FavoriteBox extends Vue {
       return
     }
 
-    console.log('checkForUpdate--------------------')
+    console.log('--------------------checkForUpdate--------------------')
 
     if (!chrome.bookmarks) {
       return
@@ -147,6 +166,7 @@ export default class FavoriteBox extends Vue {
       if (confirm('检测到云端书签有更新，是否下载？')) {
         await this.downloadBookmarks(detail.mtime)
       }
+      // await this.downloadBookmarks(detail.mtime)
     }
   }
 
@@ -157,6 +177,10 @@ export default class FavoriteBox extends Vue {
     setTimeout(() => {
       this.checkForUpdate()
     }, 500)
+
+    this.tabAsync.addListener('FAVORITE_CHANGE', () => {
+      this.readFavoriteBookmarks()
+    })
   }
 
   importingBookmarks = false
@@ -450,6 +474,9 @@ export default class FavoriteBox extends Vue {
         }
       }
       this.writeFavoriteBookmarks(this.favoriteBookmark)
+      if (data) {
+        this.uploadBookmarks()
+      }
       // delete bookmarkEdit
       bookmarkEdit?.unmount()
       document.body.removeChild(div)

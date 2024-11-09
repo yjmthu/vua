@@ -10,12 +10,19 @@
 </template>
 
 <script lang="ts">
-import { Vue } from 'vue-class-component'
+import { Options, Vue } from 'vue-class-component'
 import { DirectLink } from '@/utils/typedef'
 import { App, createApp } from 'vue'
+import TabAsync from '@/utils/tabsync'
 import BookmarkEdit from './BookmarkEdit.vue'
 
+@Options({
+  props: {
+    tabAsync: TabAsync
+  }
+})
 export default class DirectLinks extends Vue {
+  tabAsync!: TabAsync
   public directLinks: DirectLink[] = [
     {
       name: '网络学堂',
@@ -78,10 +85,15 @@ export default class DirectLinks extends Vue {
 
   writeDirectLinks () {
     localStorage.setItem('directLinks', JSON.stringify(this.directLinks))
+    this.tabAsync.postMessage({ name: 'DIRECT_LINK_CHANGE' })
   }
 
   mounted () {
     this.readDirectLinks()
+
+    this.tabAsync.addListener('DIRECT_LINK_CHANGE', () => {
+      this.readDirectLinks()
+    })
   }
 
   showBookmarkEdit (index: number) {
