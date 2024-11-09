@@ -364,6 +364,7 @@ export default class FavoriteBox extends Vue {
   }
 
   async uploadBookmarks (showAlert = false) {
+    if (!chrome.runtime) return
     const position = this.getBookmarkPosition()
     if (!position) {
       alert('同步失败，未选择云端存储位置！')
