@@ -68,6 +68,9 @@ export default class HomeView extends Vue {
 }
 
 @media screen and (max-width: 720px) {
+  #main {
+    top: -16%;
+  }
   #logo {
     width: 210px;
     height: 60;
