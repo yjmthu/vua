@@ -44,6 +44,7 @@ import { createApp, App } from 'vue'
 export default class FavoriteBox extends Vue {
   favoriteBookmark: FavoriteBookmark[] = []
   bookmarkDirStack: chrome.bookmarks.BookmarkTreeNode[] = []
+  rootNode: chrome.bookmarks.BookmarkTreeNode | null = null
   currentNode: chrome.bookmarks.BookmarkTreeNode | null = null
   isTrashMode = false
   currentTab = 0
@@ -71,11 +72,7 @@ export default class FavoriteBox extends Vue {
     const node = children[index]
 
     if (this.isTrashMode) {
-      chrome.bookmarks.remove(node.id).then(() => {
-        this.currentNode?.children?.splice(index, 1)
-      }).catch((err) => {
-        alert(err)
-      })
+      chrome.bookmarks.remove(node.id)
       return
     }
 
@@ -116,7 +113,8 @@ export default class FavoriteBox extends Vue {
     chrome.bookmarks?.getTree((bookmarkArray) => {
       const allBookmarks = bookmarkArray[0]?.children
       if (allBookmarks && allBookmarks.length) {
-        this.currentNode = allBookmarks[0]
+        this.rootNode = allBookmarks[0]
+        this.currentNode = this.rootNode
         this.bookmarkDirStack.push(this.currentNode)
       } else {
         console.log('获取书签失败。')
@@ -124,6 +122,156 @@ export default class FavoriteBox extends Vue {
     })
 
     this.readFavoriteBookmarks()
+
+    this.addBookmarkListener()
+  }
+
+  addBookmarkListener () {
+    if (!chrome.bookmarks) {
+      return
+    }
+
+    let importing = false
+
+    chrome.bookmarks.onCreated.addListener((id, bookmark) => {
+      if (importing) { return }
+      console.log('onCreated', id, bookmark)
+      if (bookmark.parentId === undefined) {
+        console.log('不存在父节点！')
+        return
+      }
+      const parent = this.findElementById(bookmark.parentId, this.rootNode)
+      if (parent && parent.children) {
+        let index = bookmark.index
+        if (index === undefined) {
+          index = parent.children.length
+        }
+        parent.children.splice(index, 0, bookmark)
+        this.updateChildrenIndex(parent)
+      } else {
+        console.log('未找到父节点！')
+      }
+    })
+
+    chrome.bookmarks.onRemoved.addListener((id, removeInfo) => {
+      console.log('onRemoved', id, removeInfo)
+      // remove from favorite bookmarks
+      const parent = this.findElementById(removeInfo.parentId, this.rootNode)
+      if (parent) {
+        const index = parent.children?.findIndex((node) => node.id === id)
+        if (index !== undefined && index >= 0) {
+          parent.children?.splice(index, 1)
+        } else {
+          console.log('未找到子节点！')
+        }
+        this.updateChildrenIndex(parent)
+      } else {
+        console.log('未找到父节点！')
+      }
+    })
+
+    chrome.bookmarks.onChanged.addListener((id, changeInfo) => {
+      console.log('onChanged', id, changeInfo)
+      const node = this.findElementById(id, this.rootNode)
+      if (node) {
+        if (changeInfo.title) {
+          node.title = changeInfo.title
+        }
+        if (changeInfo.url) {
+          node.url = changeInfo.url
+        }
+      } else {
+        console.log('未找到节点！')
+      }
+    })
+
+    chrome.bookmarks.onMoved.addListener((id, moveInfo) => {
+      console.log('onMoved', id, moveInfo)
+      const node = this.findElementById(id, this.rootNode)
+      if (node) {
+        const oldParent = this.findElementById(moveInfo.oldParentId, this.rootNode)
+        const newParent = this.findElementById(moveInfo.parentId, this.rootNode)
+        if (oldParent && oldParent.children) {
+          const index = oldParent.children.findIndex((child) => child.id === id)
+          if (index >= 0) {
+            oldParent.children.splice(index, 1)
+            this.updateChildrenIndex(oldParent)
+          }
+        }
+        if (newParent && newParent.children) {
+          let index = moveInfo.index
+          if (index === undefined) {
+            index = newParent.children.length
+          }
+          newParent.children.splice(index, 0, node)
+          this.updateChildrenIndex(newParent)
+        }
+      } else {
+        console.log('未找到节点！')
+      }
+    })
+
+    chrome.bookmarks.onChildrenReordered.addListener((id, reorderInfo) => {
+      console.log('onChildrenReordered', id, reorderInfo)
+      const node = this.findElementById(id, this.rootNode)
+      if (node && node.children) {
+        const newChildren = []
+        for (const id of reorderInfo.childIds) {
+          const child = node.children.find((child) => child.id === id)
+          if (child) {
+            newChildren.push(child)
+          }
+        }
+        node.children = newChildren
+      } else {
+        console.log('未找到节点！')
+      }
+    })
+
+    chrome.bookmarks.onImportBegan.addListener(() => {
+      console.log('onImportBegan')
+      importing = true
+    })
+
+    chrome.bookmarks.onImportEnded.addListener(() => {
+      console.log('onImportEnded')
+      importing = false
+      // update all bookmarks
+      chrome.bookmarks.getTree((bookmarkArray) => {
+        const allBookmarks = bookmarkArray[0]?.children
+        if (allBookmarks && allBookmarks.length) {
+          this.rootNode = allBookmarks[0]
+          this.currentNode = this.rootNode
+          this.bookmarkDirStack = [this.currentNode]
+        } else {
+          console.log('获取书签失败。')
+        }
+      })
+    })
+  }
+
+  findElementById (id: string, node: chrome.bookmarks.BookmarkTreeNode | null): chrome.bookmarks.BookmarkTreeNode | null {
+    if (node?.id === id) {
+      return node
+    }
+    if (node?.children) {
+      for (const child of node.children) {
+        const result = this.findElementById(id, child)
+        if (result) {
+          return result
+        }
+      }
+    }
+    return null
+  }
+
+  updateChildrenIndex (node: chrome.bookmarks.BookmarkTreeNode) {
+    if (!node.children) {
+      return
+    }
+    for (let i = 0; i < node.children.length; i++) {
+      node.children[i].index = i
+    }
   }
 
   getBookmarkSync (): BookmarkSync | null {

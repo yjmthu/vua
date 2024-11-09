@@ -490,7 +490,8 @@ export default class SideBar extends Vue {
     })
   }
 
-  goBack () {
+  goBack (event: MouseEvent) {
+    event.stopPropagation()
     if (!this.folderContentStack.length) return
     this.currentPath.pop()
     const data = this.folderContentStack.pop()
