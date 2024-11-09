@@ -342,11 +342,7 @@ export default class FavoriteBox extends Vue {
 
   getBookmarkPosition (): FilePosition | null {
     const syncString = localStorage.getItem('bookmarkSync')
-    if (!syncString) {
-      alert('同步失败，未选择云端存储位置！')
-      return null
-    }
-    return JSON.parse(syncString) as FilePosition
+    return syncString ? JSON.parse(syncString) as FilePosition : null
   }
 
   async clearBookmarks () {
@@ -476,7 +472,7 @@ export default class FavoriteBox extends Vue {
         }
       }
       this.writeFavoriteBookmarks(this.favoriteBookmark)
-      if (data) {
+      if (data && chrome.bookmarks) {
         this.uploadBookmarks()
       }
       // delete bookmarkEdit
