@@ -2,6 +2,7 @@
 node_modules
 /dist
 /build
+dist.crx
 
 # local env files
 .env.local
