@@ -9,9 +9,12 @@
     <FavoriteBox ref="favoriteBox"
       v-show="showFavorite"
       :tabAsync="tabAsync"
-      @toggleVisbility="toggleFavrotite" @updateDirectLinks="updateDirectLinks"/>
+      @showMessage="showMessage"
+      @toggleVisbility="toggleFavrotite"
+      @updateDirectLinks="updateDirectLinks"/>
     <SideBar></SideBar>
   </div>
+  <small v-if="message"> {{ message }}</small>
 </template>
 
 <script lang="ts">
@@ -33,6 +36,7 @@ import TabAsync from '@/utils/tabsync'
 })
 export default class HomeView extends Vue {
   showFavorite = false
+  message = ''
   tabAsync = new TabAsync()
 
   updateDirectLinks () {
@@ -53,6 +57,20 @@ export default class HomeView extends Vue {
     const favoriteBox = this.$refs.favoriteBox as FavoriteBox
     favoriteBox.uploadBookmarks()
   }
+
+  messageId: number | null = null
+  showMessage (message: string) {
+    this.message = message
+
+    if (this.messageId !== null) {
+      clearTimeout(this.messageId)
+    }
+
+    this.messageId = setTimeout(() => {
+      this.message = ''
+      this.messageId = null
+    }, 3000)
+  }
 }
 </script>
 
@@ -72,6 +90,20 @@ export default class HomeView extends Vue {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+small {
+  display: block;
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 6px 12px;
+  margin: 10px;
+  line-height: 16px;
+  font-size: 14px;
+  border-radius: 14px;
+  background-color: #0000ff88;
+  color: white;
 }
 
 @media screen and (max-width: 720px) {

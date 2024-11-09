@@ -5,6 +5,11 @@ interface FavoriteBookmark {
   url: string
 }
 
+interface Bookmark {
+  name: string
+  url?: string
+}
+
 interface DirectLink {
   name: string
   url: string
@@ -110,4 +115,4 @@ async function downloadFile (position: FilePosition): Promise<SyncData | null> {
   return null
 }
 
-export { FavoriteBookmark, FileDetail, FilePosition, DirectLink, getFileDetail, uploadBookmark, downloadFile }
+export { FavoriteBookmark, FileDetail, FilePosition, DirectLink, Bookmark, getFileDetail, uploadBookmark, downloadFile }

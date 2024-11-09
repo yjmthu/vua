@@ -6,15 +6,15 @@
       <span>名称</span>
       <input type="text" name="name" v-model="temp.name">
     </div>
-    <div>
+    <div v-if="'url' in temp">
       <span>链接</span>
       <input type="url" name="url" v-model="temp.url">
     </div>
-    <div v-if="isDirectLink()">
+    <div v-if="'icon' in temp">
       <span>图标</span>
       <input type="url" name="icon" v-model="(temp as DirectLink).icon">
     </div>
-    <div v-if="isDirectLink()">
+    <div v-if="'color' in temp">
       <span>背景色</span>
       <input type="text" name="color" v-model="(temp as DirectLink).color">
     </div>
@@ -28,7 +28,7 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
-import { FavoriteBookmark, DirectLink } from '@/utils/typedef'
+import { FavoriteBookmark, DirectLink, Bookmark } from '@/utils/typedef'
 
 @Options({
   components: {
@@ -39,20 +39,16 @@ import { FavoriteBookmark, DirectLink } from '@/utils/typedef'
   ]
 })
 export default class BookmarkEdit extends Vue {
-  favorite!: FavoriteBookmark | DirectLink
-  temp: FavoriteBookmark | DirectLink = {
+  favorite!: FavoriteBookmark | DirectLink | null
+  temp: FavoriteBookmark | DirectLink | Bookmark = {
     name: '',
     url: ''
   }
 
-  callback!: (data: FavoriteBookmark | DirectLink | null) => void
+  callback!: (data: FavoriteBookmark | DirectLink | Bookmark | null) => void
 
   mounted (): void {
     this.temp = JSON.parse(JSON.stringify(this.favorite))
-  }
-
-  isDirectLink () {
-    return 'icon' in this.temp
   }
 
   confirmConfig () {
