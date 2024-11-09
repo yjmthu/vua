@@ -10,7 +10,7 @@
         <SvgIcon name="ViewfinderCircle" size="30px" @click="$router.push({path: 'scan'})"/>
         <a href="https://yjmthu.github.io/vua/vua.crx" target="_blank"><SvgIcon name="Extension" size="30px"/></a>
         <SvgIcon name="ArrowUpCircle" size="30px" @click="uploadBookmarks(true)"/>
-        <SvgIcon name="ArrowDownCircle" size="30px" @click="downloadBookmarks"/>
+        <SvgIcon name="ArrowDownCircle" size="30px" @click="downloadBookmarks()"/>
         <SvgIcon name="Trash" size="30px" :class="{ checked: isTrashMode }" @click="switchTrashMode"></SvgIcon>
       </div>
     </nav>
@@ -149,8 +149,6 @@ export default class FavoriteBox extends Vue {
       return
     }
 
-    console.log('--------------------checkForUpdate--------------------')
-
     if (!chrome.bookmarks) {
       return
     }
@@ -167,6 +165,10 @@ export default class FavoriteBox extends Vue {
         await this.downloadBookmarks(detail.mtime)
       }
       // await this.downloadBookmarks(detail.mtime)
+    } else if (detail) {
+      console.log(`本地书签时间：${new Date(time * 1000).toLocaleString()}`)
+      console.log(`云端书签时间：${new Date(detail.mtime * 1000).toLocaleString()}`)
+      console.log('书签无需更新。')
     }
   }
 
