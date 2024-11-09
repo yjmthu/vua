@@ -3,6 +3,9 @@ crx_path="./dist/vua.crx"
 dist_crx_path="./dist.crx"
 if [ -f "$dist_crx_path" ]; then
   mv "$dist_crx_path" "$crx_path"
+else
+  echo "crx file not exist"
+  exit 1
 fi
 
 # absolute path

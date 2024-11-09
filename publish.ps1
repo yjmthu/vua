@@ -2,6 +2,9 @@ $crxPath = "./dist/vua.crx"
 $distPath = "./dist.crx"
 if (Test-Path $distPath) {
   Move-Item -Path "$distPath" -Destination "$crxPath"
+} else {
+  Write-Host "dist.crx not found"
+  exit
 }
 
 $distPath = (Get-Item -Path "./dist").FullName

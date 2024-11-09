@@ -70,7 +70,7 @@
 
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { BookmarkSync, checkBookmark } from '@/utils/typedef'
+import { FileDetail, FilePosition, getFileDetail } from '@/utils/typedef'
 import axios from 'axios'
 import HugeStorage from '@/utils/storage'
 
@@ -401,10 +401,12 @@ export default class SideBar extends Vue {
     return this.favoriteImageList.indexOf(this.scheduleData.currentImage) !== -1
   }
 
-  getCookies (callback: (cookies: chrome.cookies.Cookie[]) => void) {
-    chrome.cookies.getAll({
+  async getCookies () {
+    const cookies = await chrome.cookies.getAll({
       domain: this.domain
-    }, callback)
+    })
+
+    return cookies
   }
 
   login () {
@@ -416,78 +418,70 @@ export default class SideBar extends Vue {
     this.update()
   }
 
-  update () {
-    this.getCookies((cookies) => {
-      if (cookies.length === 0) {
-        alert('请先登录清华云盘！')
-        return
-      }
-      const url = `${this.host}/api/v2.1/repos/?type=mine`
-      axios.get(url).then((res) => {
-        const json = res.data?.repos
-        if (!json) return
-        this.folderContent = []
-        for (const item of json) {
-          this.folderContent.push({
-            name: item.repo_name,
-            id: item.repo_id,
-            type: item.type
-          })
-        }
-      }).catch((err) => {
-        console.log(err)
+  async update () {
+    const cookies = await this.getCookies()
+    if (cookies.length === 0) {
+      alert('请先登录清华云盘！')
+      return
+    }
+    const url = `${this.host}/api/v2.1/repos/?type=mine`
+    const res = await axios.get(url)
+    const json = res.data?.repos
+    if (!json) return
+    this.folderContent = []
+    for (const item of json) {
+      this.folderContent.push({
+        name: item.repo_name,
+        id: item.repo_id,
+        type: item.type
       })
-    })
+    }
   }
 
-  goForward (data: FolderContent) {
+  async goForward (data: FolderContent) {
     // const data = this.folderContent[index]
     if (!data) return
-    this.getCookies((cookies) => {
-      if (cookies.length === 0) {
-        alert('请先登录清华云盘！')
-        return
+    const cookies = await this.getCookies()
+    if (cookies.length === 0) {
+      alert('请先登录清华云盘！')
+      return
+    }
+    if (data.type !== 'dir' && data.type !== 'mine') {
+      alert('不是文件夹！')
+      return
+    }
+    let p: string, id: string
+    if (this.currentPath.length) {
+      id = this.currentPath[0].id
+      p = ''
+      for (let i = 1; i !== this.currentPath.length; ++i) {
+        p += `/${this.currentPath[i].name}`
       }
-      if (data.type !== 'dir' && data.type !== 'mine') {
-        alert('不是文件夹！')
-        return
-      }
-      let p: string, id: string
-      if (this.currentPath.length) {
-        id = this.currentPath[0].id
-        p = ''
-        for (let i = 1; i !== this.currentPath.length; ++i) {
-          p += `/${this.currentPath[i].name}`
-        }
-        p += `/${data.name}`
-      } else {
-        id = data.id
-        p = '/'
-      }
+      p += `/${data.name}`
+    } else {
+      id = data.id
+      p = '/'
+    }
 
-      const url = `${this.host}/api/v2.1/repos/${id}/dir/?p=${encodeURIComponent(p)}&with_thumbnail=true`
+    const url = `${this.host}/api/v2.1/repos/${id}/dir/?p=${encodeURIComponent(p)}&with_thumbnail=true`
 
-      axios.get(url).then((res) => {
-        const json = res.data?.dirent_list
-        if (!json) return
-        this.currentPath.push({
-          name: data.name,
-          id: data.id,
-          type: data.type
-        })
-        this.folderContentStack.push(this.folderContent)
-        this.folderContent = []
-        for (const item of json) {
-          this.folderContent.push({
-            name: item.name,
-            id: item.id,
-            type: item.type
-          })
-        }
-      }).catch((err) => {
-        console.log(err)
-      })
+    const res = await axios.get(url)
+    const json = res.data?.dirent_list
+    if (!json) return
+    this.currentPath.push({
+      name: data.name,
+      id: data.id,
+      type: data.type
     })
+    this.folderContentStack.push(this.folderContent)
+    this.folderContent = []
+    for (const item of json) {
+      this.folderContent.push({
+        name: item.name,
+        id: item.id,
+        type: item.type
+      })
+    }
   }
 
   goBack (event: MouseEvent) {
@@ -518,15 +512,6 @@ export default class SideBar extends Vue {
       return
     }
     this.deployData = { lib, thumbnail, filesList }
-    /*
-    chrome.storage.local.set({ deployData: this.deployData }, () => {
-      if (chrome.runtime.lastError) {
-        alert(chrome.runtime.lastError)
-      } else {
-        console.log('Deploy data saved.')
-      }
-    })
-    */
     localStorage.setItem('deployData', JSON.stringify(this.deployData))
     alert('部署成功！')
     this.startSchedule()
@@ -538,21 +523,32 @@ export default class SideBar extends Vue {
       return
     }
 
-    const bookmarkSync: BookmarkSync = {
+    const bookmarkPosition: FilePosition = {
       host: this.host,
       repoId: this.currentPath[0].id,
       folder: this.currentPath.map((item, index) => (index ? item.name : '')).join('/'),
       fileName: 'vua.bookmarks.json'
     }
 
-    const exsist = await checkBookmark(bookmarkSync)
+    const detail = await getFileDetail(bookmarkPosition)
     // if (!exsist || confirm('该文件夹下已存在书签文件，是否覆盖？')) {
     //   let bookmarks = localStorage.getItem('bookmarks')
     //   if (!bookmarks) bookmarks = '[]'
     //   // uploadBookmark(bookmarks, bookmarkSync, true)
     // }
-    localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkSync))
-    alert(`设置书签位置成功！\n云端状态：${exsist ? '已存在书签文件！' : '不存在书签文件！'}`)
+    const exsist = detail?.type === 'file'
+    let msg = '设置书签位置成功！\n'
+    if (exsist) {
+      // UTC
+      const timestamp = detail.mtime
+      // YYYY-MM-DD HH:MM:SS
+      const time = new Date(timestamp * 1000).toLocaleString()
+      msg += `云端状态：已存在书签文件！\n最后修改时间：${time}。`
+    } else {
+      msg += '云端状态：未找到书签文件！'
+    }
+    alert(msg)
+    localStorage.setItem('bookmarkSync', JSON.stringify(bookmarkPosition))
   }
 
   setWallpaper () {

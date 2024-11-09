@@ -9,7 +9,7 @@
         <SvgIcon name="ArrowLeft" size="30px" @click="leaveNode"></SvgIcon>
         <SvgIcon name="ViewfinderCircle" size="30px" @click="$router.push({path: 'scan'})"/>
         <a href="https://yjmthu.github.io/vua/vua.crx" target="_blank"><SvgIcon name="Extension" size="30px"/></a>
-        <SvgIcon name="ArrowUpCircle" size="30px" @click="uploadBookmarks"/>
+        <SvgIcon name="ArrowUpCircle" size="30px" @click="uploadBookmarks(true)"/>
         <SvgIcon name="ArrowDownCircle" size="30px" @click="downloadBookmarks"/>
         <SvgIcon name="Trash" size="30px" :class="{ checked: isTrashMode }" @click="() => { isTrashMode = !isTrashMode }"></SvgIcon>
       </div>
@@ -32,7 +32,8 @@
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
 import BookmarkEdit from './BookmarkEdit.vue'
-import { FavoriteBookmark, BookmarkSync, uploadBookmark, downloadBookmark } from '@/utils/typedef'
+import TabAsync from '@/utils/tabsync'
+import { FavoriteBookmark, FilePosition, uploadBookmark, getFileDetail, downloadFile } from '@/utils/typedef'
 import { createApp, App } from 'vue'
 
 @Options({
@@ -46,6 +47,7 @@ export default class FavoriteBox extends Vue {
   bookmarkDirStack: chrome.bookmarks.BookmarkTreeNode[] = []
   rootNode: chrome.bookmarks.BookmarkTreeNode | null = null
   currentNode: chrome.bookmarks.BookmarkTreeNode | null = null
+  tabAsync = new TabAsync()
   isTrashMode = false
   currentTab = 0
 
@@ -109,33 +111,63 @@ export default class FavoriteBox extends Vue {
     }
   }
 
-  mounted (): void {
+  loadBookmarks () {
     chrome.bookmarks?.getTree((bookmarkArray) => {
       const allBookmarks = bookmarkArray[0]?.children
       if (allBookmarks && allBookmarks.length) {
         this.rootNode = allBookmarks[0]
         this.currentNode = this.rootNode
-        this.bookmarkDirStack.push(this.currentNode)
+        this.bookmarkDirStack = [this.currentNode]
       } else {
         console.log('获取书签失败。')
       }
     })
-
-    this.readFavoriteBookmarks()
-
-    this.addBookmarkListener()
   }
 
+  async checkForUpdate () {
+    if (this.tabAsync.otherTabCount > 0) {
+      console.log('存在其他标签页，无需同步。')
+      return
+    }
+
+    console.log('checkForUpdate--------------------')
+
+    if (!chrome.bookmarks) {
+      return
+    }
+
+    const position = this.getBookmarkPosition()
+    if (!position) {
+      return
+    }
+
+    const detail = await getFileDetail(position)
+    const time = this.readBookmarkTime()
+    if (detail && detail.mtime > time) {
+      if (confirm('检测到云端书签有更新，是否下载？')) {
+        await this.downloadBookmarks(detail.mtime)
+      }
+    }
+  }
+
+  mounted (): void {
+    this.loadBookmarks()
+    this.readFavoriteBookmarks()
+    this.addBookmarkListener()
+    setTimeout(() => {
+      this.checkForUpdate()
+    }, 500)
+  }
+
+  importingBookmarks = false
   addBookmarkListener () {
     if (!chrome.bookmarks) {
       return
     }
 
-    let importing = false
-
     chrome.bookmarks.onCreated.addListener((id, bookmark) => {
-      if (importing) { return }
-      console.log('onCreated', id, bookmark)
+      if (this.importingBookmarks) { return }
+      // console.log('onCreated', id, bookmark)
       if (bookmark.parentId === undefined) {
         console.log('不存在父节点！')
         return
@@ -148,14 +180,17 @@ export default class FavoriteBox extends Vue {
         }
         parent.children.splice(index, 0, bookmark)
         this.updateChildrenIndex(parent)
+        if (this.tabAsync.isMaster()) {
+          this.uploadBookmarks()
+        }
       } else {
         console.log('未找到父节点！')
       }
     })
 
     chrome.bookmarks.onRemoved.addListener((id, removeInfo) => {
-      console.log('onRemoved', id, removeInfo)
-      // remove from favorite bookmarks
+      if (this.importingBookmarks) { return }
+      // console.log('onRemoved', id, removeInfo)
       const parent = this.findElementById(removeInfo.parentId, this.rootNode)
       if (parent) {
         const index = parent.children?.findIndex((node) => node.id === id)
@@ -165,13 +200,16 @@ export default class FavoriteBox extends Vue {
           console.log('未找到子节点！')
         }
         this.updateChildrenIndex(parent)
+        if (this.tabAsync.isMaster()) {
+          this.uploadBookmarks()
+        }
       } else {
         console.log('未找到父节点！')
       }
     })
 
     chrome.bookmarks.onChanged.addListener((id, changeInfo) => {
-      console.log('onChanged', id, changeInfo)
+      // console.log('onChanged', id, changeInfo)
       const node = this.findElementById(id, this.rootNode)
       if (node) {
         if (changeInfo.title) {
@@ -180,13 +218,16 @@ export default class FavoriteBox extends Vue {
         if (changeInfo.url) {
           node.url = changeInfo.url
         }
+        if (this.tabAsync.isMaster()) {
+          this.uploadBookmarks()
+        }
       } else {
         console.log('未找到节点！')
       }
     })
 
     chrome.bookmarks.onMoved.addListener((id, moveInfo) => {
-      console.log('onMoved', id, moveInfo)
+      // console.log('onMoved', id, moveInfo)
       const node = this.findElementById(id, this.rootNode)
       if (node) {
         const oldParent = this.findElementById(moveInfo.oldParentId, this.rootNode)
@@ -206,13 +247,16 @@ export default class FavoriteBox extends Vue {
           newParent.children.splice(index, 0, node)
           this.updateChildrenIndex(newParent)
         }
+        if (this.tabAsync.isMaster()) {
+          this.uploadBookmarks()
+        }
       } else {
         console.log('未找到节点！')
       }
     })
 
     chrome.bookmarks.onChildrenReordered.addListener((id, reorderInfo) => {
-      console.log('onChildrenReordered', id, reorderInfo)
+      // console.log('onChildrenReordered', id, reorderInfo)
       const node = this.findElementById(id, this.rootNode)
       if (node && node.children) {
         const newChildren = []
@@ -223,6 +267,9 @@ export default class FavoriteBox extends Vue {
           }
         }
         node.children = newChildren
+        if (this.tabAsync.isMaster()) {
+          this.uploadBookmarks()
+        }
       } else {
         console.log('未找到节点！')
       }
@@ -230,23 +277,16 @@ export default class FavoriteBox extends Vue {
 
     chrome.bookmarks.onImportBegan.addListener(() => {
       console.log('onImportBegan')
-      importing = true
+      this.importingBookmarks = true
     })
 
     chrome.bookmarks.onImportEnded.addListener(() => {
       console.log('onImportEnded')
-      importing = false
-      // update all bookmarks
-      chrome.bookmarks.getTree((bookmarkArray) => {
-        const allBookmarks = bookmarkArray[0]?.children
-        if (allBookmarks && allBookmarks.length) {
-          this.rootNode = allBookmarks[0]
-          this.currentNode = this.rootNode
-          this.bookmarkDirStack = [this.currentNode]
-        } else {
-          console.log('获取书签失败。')
-        }
-      })
+      this.importingBookmarks = false
+      this.loadBookmarks()
+      if (this.tabAsync.isMaster()) {
+        this.uploadBookmarks()
+      }
     })
   }
 
@@ -274,13 +314,13 @@ export default class FavoriteBox extends Vue {
     }
   }
 
-  getBookmarkSync (): BookmarkSync | null {
+  getBookmarkPosition (): FilePosition | null {
     const syncString = localStorage.getItem('bookmarkSync')
     if (!syncString) {
       alert('同步失败，未选择云端存储位置！')
       return null
     }
-    return JSON.parse(syncString) as BookmarkSync
+    return JSON.parse(syncString) as FilePosition
   }
 
   async clearBookmarks () {
@@ -301,9 +341,9 @@ export default class FavoriteBox extends Vue {
     }
   }
 
-  async uploadBookmarks () {
-    const sync = this.getBookmarkSync()
-    if (!sync) {
+  async uploadBookmarks (showAlert = false) {
+    const position = this.getBookmarkPosition()
+    if (!position) {
       alert('同步失败，未选择云端存储位置！')
       return
     }
@@ -316,8 +356,30 @@ export default class FavoriteBox extends Vue {
       bookmark: this.bookmarkDirStack[0],
       favorite: this.favoriteBookmark,
       directLinks: directLinks ? JSON.parse(directLinks) : null
-    }), sync, true)
-    alert('上传书签成功！')
+    }), position, true)
+    const detail = await getFileDetail(position)
+    if (detail) {
+      this.saveBookmarkTime(detail.mtime)
+      if (showAlert) {
+        alert('上传书签成功！')
+      } else {
+        console.log('上传书签成功！')
+      }
+    } else {
+      alert('上传书签失败，无法获取文件信息！')
+    }
+  }
+
+  saveBookmarkTime (time: number) {
+    localStorage.setItem('bookmarkTime', time.toString())
+  }
+
+  readBookmarkTime (): number {
+    const time = localStorage.getItem('bookmarkTime')
+    if (time) {
+      return parseInt(time)
+    }
+    return 0
   }
 
   async addBookmark (parentId: string, node: chrome.bookmarks.BookmarkTreeNode) {
@@ -333,31 +395,42 @@ export default class FavoriteBox extends Vue {
     }
   }
 
-  async downloadBookmarks () {
-    const sync = this.getBookmarkSync()
-    if (!sync) return
+  async downloadBookmarks (timestamp: null | number = null): Promise<boolean> {
+    const position = this.getBookmarkPosition()
+    if (!position) return false
 
-    const data = await downloadBookmark(sync)
-    if (data.bookmark && data.favorite) {
+    const data = await downloadFile(position)
+    if (data && data.bookmark && data.favorite) {
       this.writeFavoriteBookmarks(data.favorite)
       this.favoriteBookmark = data.favorite
     } else {
       alert('下载书签失败！')
-      return
+      return false
     }
     if (data.directLinks) {
       localStorage.setItem('directLinks', JSON.stringify(data.directLinks))
       this.$emit('updateDirectLinks')
     }
+    //
+    const dataChilren = data.bookmark.children || []
+    this.importingBookmarks = true
     const rootId = await this.clearBookmarks()
     console.log('清空书签成功！')
-    this.currentNode = data.bookmark
-    this.bookmarkDirStack = [this.currentNode]
-    const dataChilren = this.currentNode.children || []
     for (const node of dataChilren) {
       await this.addBookmark(rootId, node)
     }
+    this.importingBookmarks = false
+    if (timestamp === null) {
+      const detail = await getFileDetail(position)
+      if (!detail) {
+        alert('下载书签失败！')
+        return false
+      }
+      timestamp = detail.mtime
+    }
+    this.saveBookmarkTime(timestamp)
     alert('下载书签成功！')
+    return true
   }
 
   showBookmarkEdit (index: number) {
