@@ -457,7 +457,7 @@ export default class FavoriteBox extends Vue {
   }
 
   showBookmarkEdit (index: number) {
-    const favorite = index > 0 ? this.favoriteBookmark[index] : null
+    const favorite = this.favoriteBookmark[index]
     // create 'bookmark-edit' element
     const div = document.createElement('div')
     div.style.position = 'absolute'

@@ -39,7 +39,7 @@ import { FavoriteBookmark, DirectLink } from '@/utils/typedef'
   ]
 })
 export default class BookmarkEdit extends Vue {
-  favorite!: FavoriteBookmark | DirectLink | null
+  favorite!: FavoriteBookmark | DirectLink
   temp: FavoriteBookmark | DirectLink = {
     name: '',
     url: ''
@@ -48,9 +48,7 @@ export default class BookmarkEdit extends Vue {
   callback!: (data: FavoriteBookmark | DirectLink | null) => void
 
   mounted (): void {
-    if (this.favorite) {
-      this.temp = this.favorite
-    }
+    this.temp = JSON.parse(JSON.stringify(this.favorite))
   }
 
   isDirectLink () {

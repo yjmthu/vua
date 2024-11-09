@@ -2,10 +2,12 @@
   <div id="main">
     <div id="logo" ref="logo" @click="toggleFavrotite"></div>
     <DirectLinks ref="directLinks"
-      :tabAsync="tabAsync"/>
+      :tabAsync="tabAsync"
+      @linkChanged="linkChanged"/>
     <SearchBox
       @engineChanged="changeEngineLogo"/>
-    <FavoriteBox v-show="showFavorite"
+    <FavoriteBox ref="favoriteBox"
+      v-show="showFavorite"
       :tabAsync="tabAsync"
       @toggleVisbility="toggleFavrotite" @updateDirectLinks="updateDirectLinks"/>
     <SideBar></SideBar>
@@ -45,6 +47,11 @@ export default class HomeView extends Vue {
     // console.log(`changeEngineLogo: ${logoName}`)
     const logo = this.$refs.logo as HTMLElement
     logo.style.backgroundImage = `url(./icons/${logoName}.svg)`
+  }
+
+  linkChanged () {
+    const favoriteBox = this.$refs.favoriteBox as FavoriteBox
+    favoriteBox.uploadBookmarks()
   }
 }
 </script>

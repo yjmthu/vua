@@ -106,6 +106,7 @@ export default class DirectLinks extends Vue {
       if (data) {
         this.directLinks[index] = data
         this.writeDirectLinks()
+        this.$emit('linkChanged')
       }
       bookmarkEdit?.unmount()
       document.body.removeChild(div)
