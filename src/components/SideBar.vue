@@ -397,7 +397,7 @@ export default class SideBar extends Vue {
 
   set scheduleSource (value: 'favorite' | 'deploy') {
     // check if is chrome extention or pure website
-    if (!chrome.runtime) {
+    if (!chrome?.runtime) {
       this.scheduleData.source = value
       this.showMessage('请使用 Chrome 扩展！', 'warning')
       return
@@ -529,7 +529,7 @@ export default class SideBar extends Vue {
     const app = document.getElementById('app')
     if (!app) return
 
-    if (!chrome.runtime) {
+    if (!chrome?.runtime) {
       app.style.backgroundImage = `url(${url})`
     } else {
       // console.log('Set background image:', url)
@@ -590,6 +590,10 @@ export default class SideBar extends Vue {
   }
 
   async getCookies () {
+    if (!chrome?.cookies) {
+      this.showMessage('请使用 Chrome 扩展！', 'warning')
+      return []
+    }
     const cookies = await chrome.cookies.getAll({
       domain: this.domain
     })
@@ -597,12 +601,13 @@ export default class SideBar extends Vue {
     return cookies
   }
 
-  login () {
-    chrome.tabs.create({ url: this.host }).then((tab) => {
-      console.log(tab)
-    }).catch((err) => {
-      console.log(err)
-    })
+  async login () {
+    if (!chrome?.tabs) {
+      this.showMessage('请使用 Chrome 扩展！', 'warning')
+      return
+    }
+    const tab = await chrome.tabs.create({ url: this.host })
+    console.log('Open login page:', tab)
     this.update()
   }
 

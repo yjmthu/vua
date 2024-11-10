@@ -14,11 +14,11 @@
         <SvgIcon name="Trash" size="30px" :class="{ checked: isTrashMode }" @click="switchTrashMode"></SvgIcon>
       </div>
     </nav>
-    <ul v-if="currentTab == 0" id="favorite-bookmarks">
+    <ul v-if="vifFavoritesTab" id="favorite-bookmarks">
       <li v-for="(data, index) in favoriteBookmark" :key="index" @click="clickFavorite(index)" @contextmenu.prevent="editFavorite(index)">{{  data.name }}</li>
       <li @click="editFavorite(favoriteBookmark.length)"><SvgIcon name="PlusSmall" size="24px"></SvgIcon></li>
     </ul>
-    <ul v-if="currentTab == 1" id="all-bookmarks">
+    <ul v-if="vifBookmarksTab" id="all-bookmarks">
       <li v-for="(data, index) in currentNode?.children" :key="index" @click="enterNode(index)" @contextmenu.prevent="editBookmark(index)">
         <SvgIcon :name="data.children ? 'Folder': 'Document'" size="14px"></SvgIcon>
         <span>{{ data.title }}</span>
@@ -49,6 +49,14 @@ export default class FavoriteBox extends Vue {
   tabAsync!: TabAsync
   isTrashMode = false
   currentTab = 0
+
+  get vifBookmarksTab () {
+    return chrome?.bookmarks && this.currentTab === 1
+  }
+
+  get vifFavoritesTab () {
+    return this.currentTab === 0
+  }
 
   getCurrentParth () {
     return this.bookmarkDirStack.map((node) => {
@@ -146,7 +154,7 @@ export default class FavoriteBox extends Vue {
   }
 
   loadBookmarks () {
-    chrome.bookmarks?.getTree((bookmarkArray) => {
+    chrome?.bookmarks?.getTree((bookmarkArray) => {
       const allBookmarks = bookmarkArray[0]?.children
       if (allBookmarks && allBookmarks.length) {
         this.bookmarkDirStack = [allBookmarks[0]]
@@ -182,7 +190,7 @@ export default class FavoriteBox extends Vue {
 
   importingBookmarks = false
   addBookmarkListener () {
-    if (!chrome.bookmarks) {
+    if (!chrome?.bookmarks) {
       return
     }
 
