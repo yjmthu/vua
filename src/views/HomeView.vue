@@ -106,7 +106,7 @@ export default class HomeView extends Vue {
       return
     }
 
-    if (!chrome?.bookmarks) {
+    if (typeof chrome === 'undefined' || chrome.bookmarks === undefined) {
       return
     }
 
@@ -134,7 +134,7 @@ export default class HomeView extends Vue {
   }
 
   async uploadSyncData () {
-    if (!chrome?.runtime) return
+    if (typeof chrome === 'undefined' || chrome.runtime === undefined) return
     const position = this.getBookmarkPosition()
     if (!position) {
       this.showMessage('同步失败，未选择云端存储位置！', 'warning')

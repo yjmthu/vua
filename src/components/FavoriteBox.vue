@@ -51,7 +51,7 @@ export default class FavoriteBox extends Vue {
   currentTab = 0
 
   get vifBookmarksTab () {
-    return chrome?.bookmarks && this.currentTab === 1
+    return typeof chrome !== 'undefined' && chrome.bookmarks && this.currentTab === 1
   }
 
   get vifFavoritesTab () {
@@ -154,7 +154,10 @@ export default class FavoriteBox extends Vue {
   }
 
   loadBookmarks () {
-    chrome?.bookmarks?.getTree((bookmarkArray) => {
+    if (typeof chrome === 'undefined' || !chrome.bookmarks) {
+      return
+    }
+    chrome.bookmarks?.getTree((bookmarkArray) => {
       const allBookmarks = bookmarkArray[0]?.children
       if (allBookmarks && allBookmarks.length) {
         this.bookmarkDirStack = [allBookmarks[0]]
@@ -190,7 +193,7 @@ export default class FavoriteBox extends Vue {
 
   importingBookmarks = false
   addBookmarkListener () {
-    if (!chrome?.bookmarks) {
+    if (typeof chrome === 'undefined' || !chrome.bookmarks) {
       return
     }
 

@@ -121,7 +121,7 @@ export default class SideBar extends Vue {
   showSideBar = false
   domain = 'cloud.tsinghua.edu.cn'
   host = `https://${this.domain}`
-  _wallpaperDataIndex = '-1'
+  wallDataIndex = '-1'
   wallpaperData: WallpaperData[] = []
   folderContent: FolderContent[] = []
   currentPath: FolderContent[] = []
@@ -151,7 +151,7 @@ export default class SideBar extends Vue {
   }
 
   set wallpaperDataIndex (index: string) {
-    if (index === this._wallpaperDataIndex) return
+    if (index === this.wallDataIndex) return
 
     if (index === '-2') {
       const bookmark: Bookmark = {
@@ -164,27 +164,27 @@ export default class SideBar extends Vue {
           favorite: this.favoriteImageList,
           deploy: this.deployData
         })
-        this._wallpaperDataIndex = (this.wallpaperData.length - 1).toString()
+        this.wallDataIndex = (this.wallpaperData.length - 1).toString()
         this.saveWallpaperData(this.wallpaperData)
         this.saveWallpaperDataIndex()
       }
       this.$emit('showEditBox', bookmark, callback)
       return
     } else if (index === '-1') {
-      this._wallpaperDataIndex = index
+      this.wallDataIndex = index
       this.readDeployData()
       this.readFavoriteImageList()
       this.readScheduleData()
     } else {
-      const lastIndex = this._wallpaperDataIndex
-      this._wallpaperDataIndex = index
+      const lastIndex = this.wallDataIndex
+      this.wallDataIndex = index
       this.updateDetailData()
       if (lastIndex === '-1' && confirm('是否覆盖本地配置？')) {
-        this._wallpaperDataIndex = '-1'
+        this.wallDataIndex = '-1'
         this.saveScheduleData()
         this.saveFavoriteImageList()
         this.saveDeployData()
-        this._wallpaperDataIndex = index
+        this.wallDataIndex = index
       }
     }
     this.saveWallpaperDataIndex()
@@ -192,7 +192,7 @@ export default class SideBar extends Vue {
   }
 
   get wallpaperDataIndex () {
-    return this._wallpaperDataIndex
+    return this.wallDataIndex
   }
 
   changeWallpaperDataName () {
@@ -330,7 +330,7 @@ export default class SideBar extends Vue {
   readWallpaperDataIndex () {
     const index = localStorage.getItem('wallpaperDataIndex')
     if (index) {
-      this._wallpaperDataIndex = index
+      this.wallDataIndex = index
     }
   }
 
@@ -397,7 +397,7 @@ export default class SideBar extends Vue {
 
   set scheduleSource (value: 'favorite' | 'deploy') {
     // check if is chrome extention or pure website
-    if (!chrome?.runtime) {
+    if (typeof chrome === 'undefined' || chrome.runtime === undefined) {
       this.scheduleData.source = value
       this.showMessage('请使用 Chrome 扩展！', 'warning')
       return
@@ -529,7 +529,7 @@ export default class SideBar extends Vue {
     const app = document.getElementById('app')
     if (!app) return
 
-    if (!chrome?.runtime) {
+    if (typeof chrome === 'undefined' || chrome.runtime === undefined) {
       app.style.backgroundImage = `url(${url})`
     } else {
       // console.log('Set background image:', url)
@@ -590,7 +590,7 @@ export default class SideBar extends Vue {
   }
 
   async getCookies () {
-    if (!chrome?.cookies) {
+    if (typeof chrome === 'undefined' || chrome.cookies === undefined) {
       this.showMessage('请使用 Chrome 扩展！', 'warning')
       return []
     }
@@ -602,7 +602,7 @@ export default class SideBar extends Vue {
   }
 
   async login () {
-    if (!chrome?.tabs) {
+    if (typeof chrome === 'undefined' || chrome.tabs === undefined) {
       this.showMessage('请使用 Chrome 扩展！', 'warning')
       return
     }
