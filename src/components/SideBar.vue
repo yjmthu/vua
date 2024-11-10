@@ -336,11 +336,11 @@ export default class SideBar extends Vue {
     }
   }
 
-  saveWallpaperData (data: WallpaperData[]) {
+  saveWallpaperData (data: WallpaperData[], upload = true) {
     this.wallpaperData = data
     localStorage.setItem('wallpaperData', JSON.stringify(data))
     this.tabAsync.postMessage({ name: 'WALLPAPERDATA_CHANGE' })
-    this.uploadSyncData()
+    if (upload) this.uploadSyncData()
   }
 
   importWallpaperData (data: WallpaperData[]) {
@@ -359,7 +359,7 @@ export default class SideBar extends Vue {
       this.wallpaperDataIndex = '-1'
     }
 
-    this.saveWallpaperData(data)
+    this.saveWallpaperData(data, false)
   }
 
   exportWallpaperData () {
