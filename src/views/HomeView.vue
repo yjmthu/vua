@@ -150,13 +150,16 @@ export default class HomeView extends Vue {
       directLinks: directLinks.exportDirectLinkData(),
       wallpaper: wallpaperBar.exportWallpaperData()
     }
-    await uploadSyncData(syncData, position, true)
+    if (!await uploadSyncData(syncData, position, true)) {
+      this.showMessage('数据上传失败！', 'error')
+      return
+    }
     const detail = await getFileDetail(position)
     if (detail) {
       this.saveSyncTime(detail.mtime)
-      this.showMessage('上传书签成功！', 'info')
+      this.showMessage('数据上传成功！', 'info')
     } else {
-      this.showMessage('上传书签失败，无法获取文件信息！', 'error')
+      this.showMessage('无法获取文件信息！', 'warn')
     }
   }
 

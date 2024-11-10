@@ -167,12 +167,24 @@ export default class SideBar extends Vue {
       this.$emit('showEditBox', bookmark, callback)
       return
     }
-    this._wallpaperDataIndex = index
     if (index === '-1') {
+      this._wallpaperDataIndex = index
       this.readDeployData()
       this.readFavoriteImageList()
       this.readScheduleData()
+    } else {
+      const lastIndex = this._wallpaperDataIndex
+      this._wallpaperDataIndex = index
+      this.updateDetailData()
+      if (lastIndex === '-1' && confirm('是否覆盖本地配置？')) {
+        this._wallpaperDataIndex = '-1'
+        this.saveScheduleData()
+        this.saveFavoriteImageList()
+        this.saveDeployData()
+        this._wallpaperDataIndex = index
+      }
     }
+    this.saveWallpaperDataIndex()
     this.startSchedule()
   }
 
@@ -181,7 +193,6 @@ export default class SideBar extends Vue {
   }
 
   uploadSyncData () {
-    console.log('上传壁纸数据')
     this.$emit('uploadSyncData')
   }
 
@@ -297,7 +308,7 @@ export default class SideBar extends Vue {
   readWallpaperDataIndex () {
     const index = localStorage.getItem('wallpaperDataIndex')
     if (index) {
-      this.wallpaperDataIndex = index
+      this._wallpaperDataIndex = index
     }
   }
 
@@ -506,8 +517,10 @@ export default class SideBar extends Vue {
       const newUrl = URL.createObjectURL(blob)
       app.style.backgroundImage = `url(${newUrl})`
     }
-    this.scheduleData.currentImage = url
-    this.saveScheduleData()
+    if (url !== this.scheduleData.currentImage) {
+      this.scheduleData.currentImage = url
+      this.saveScheduleData()
+    }
   }
 
   setFromFavorite (view: string) {
