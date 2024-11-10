@@ -9,7 +9,7 @@
         <SvgIcon name="ArrowLeft" size="30px" @click="leaveNode"></SvgIcon>
         <SvgIcon name="ViewfinderCircle" size="30px" @click="$router.push({path: 'scan'})"/>
         <a href="https://yjmthu.github.io/vua/vua.crx" target="_blank"><SvgIcon name="Extension" size="30px"/></a>
-        <SvgIcon name="ArrowUpCircle" size="30px" @click="uploadBookmarks(true)"/>
+        <SvgIcon name="ArrowUpCircle" size="30px" @click="uploadBookmarks()"/>
         <SvgIcon name="ArrowDownCircle" size="30px" @click="downloadBookmarks()"/>
         <SvgIcon name="Trash" size="30px" :class="{ checked: isTrashMode }" @click="switchTrashMode"></SvgIcon>
       </div>
@@ -33,7 +33,7 @@ import { Vue, Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
 import BookmarkEdit from './BookmarkEdit.vue'
 import TabAsync from '@/utils/tabsync'
-import { FavoriteBookmark, FilePosition, uploadBookmark, getFileDetail, downloadFile, Bookmark } from '@/utils/typedef'
+import { FilePosition, uploadBookmark, getFileDetail, downloadFile, Bookmark } from '@/utils/typedef'
 import { createApp, App } from 'vue'
 
 @Options({
@@ -46,7 +46,7 @@ import { createApp, App } from 'vue'
   }
 })
 export default class FavoriteBox extends Vue {
-  favoriteBookmark: FavoriteBookmark[] = []
+  favoriteBookmark: Bookmark[] = []
   bookmarkDirStack: chrome.bookmarks.BookmarkTreeNode[] = []
   rootNode: chrome.bookmarks.BookmarkTreeNode | null = null
   currentNode: chrome.bookmarks.BookmarkTreeNode | null = null
@@ -63,11 +63,11 @@ export default class FavoriteBox extends Vue {
   readFavoriteBookmarks () {
     const data = localStorage.getItem('bookmarks')
     if (data) {
-      this.favoriteBookmark = JSON.parse(data) as FavoriteBookmark[]
+      this.favoriteBookmark = JSON.parse(data) as Bookmark[]
     }
   }
 
-  writeFavoriteBookmarks (data: FavoriteBookmark[]) {
+  writeFavoriteBookmarks (data: Bookmark[]) {
     localStorage.setItem('bookmarks', JSON.stringify(data))
     this.tabAsync.postMessage({ name: 'FAVORITE_CHANGE' })
   }
@@ -181,8 +181,13 @@ export default class FavoriteBox extends Vue {
     })
   }
 
-  showMessage (msg: string) {
-    this.$emit('showMessage', msg)
+  showMessage (msg: string, type: 'info' | 'warn' | 'error') {
+    const colorMap = {
+      info: '#0000ff88',
+      warn: '#ffff0088',
+      error: '#ff000088'
+    }
+    this.$emit('showMessage', msg, colorMap[type])
   }
 
   updateDirectLinks () {
@@ -310,12 +315,12 @@ export default class FavoriteBox extends Vue {
     })
 
     chrome.bookmarks.onImportBegan.addListener(() => {
-      this.showMessage('书签导入开始。')
+      this.showMessage('书签导入开始。', 'info')
       this.importingBookmarks = true
     })
 
     chrome.bookmarks.onImportEnded.addListener(() => {
-      this.showMessage('书签导入结束。')
+      this.showMessage('书签导入结束。', 'info')
       this.importingBookmarks = false
       this.loadBookmarks()
       if (this.tabAsync.isMaster()) {
@@ -371,15 +376,15 @@ export default class FavoriteBox extends Vue {
     }
   }
 
-  async uploadBookmarks (showAlert = false) {
+  async uploadBookmarks () {
     if (!chrome.runtime) return
     const position = this.getBookmarkPosition()
     if (!position) {
-      this.showMessage('同步失败，未选择云端存储位置！')
+      this.showMessage('同步失败，未选择云端存储位置！', 'warn')
       return
     }
     if (!this.bookmarkDirStack.length) {
-      this.showMessage('上传失败，书签数据错误！')
+      this.showMessage('上传失败，书签数据错误！', 'error')
       return
     }
     const directLinks = localStorage.getItem('directLinks')
@@ -391,13 +396,9 @@ export default class FavoriteBox extends Vue {
     const detail = await getFileDetail(position)
     if (detail) {
       this.saveBookmarkTime(detail.mtime)
-      if (showAlert) {
-        this.showMessage('上传书签成功！')
-      } else {
-        console.log('上传书签成功！')
-      }
+      this.showMessage('上传书签成功！', 'info')
     } else {
-      this.showMessage('上传书签失败，无法获取文件信息！')
+      this.showMessage('上传书签失败，无法获取文件信息！', 'error')
     }
   }
 
@@ -435,7 +436,7 @@ export default class FavoriteBox extends Vue {
       this.writeFavoriteBookmarks(data.favorite)
       this.favoriteBookmark = data.favorite
     } else {
-      this.showMessage('下载书签失败！')
+      this.showMessage('下载书签失败！', 'error')
       return false
     }
     if (data.directLinks) {
@@ -453,24 +454,24 @@ export default class FavoriteBox extends Vue {
     if (timestamp === null) {
       const detail = await getFileDetail(position)
       if (!detail) {
-        this.showMessage('下载书签失败！')
+        this.showMessage('下载书签失败！', 'error')
         return false
       }
       timestamp = detail.mtime
     }
     this.saveBookmarkTime(timestamp)
-    this.showMessage('下载书签成功！')
+    this.showMessage('下载书签成功！', 'info')
     return true
   }
 
-  showBookmarkEdit (data: FavoriteBookmark | Bookmark, callback: ((data: FavoriteBookmark) => void) | ((data: Bookmark) => void)) {
+  showBookmarkEdit (data: Bookmark, callback: ((data: Bookmark) => void) | ((data: Bookmark) => void)) {
     // create 'bookmark-edit' element
     const div = document.createElement('div')
     div.style.position = 'absolute'
     div.style.zIndex = '1000'
     document.body.appendChild(div)
     let bookmarkEdit: App<Element> | null = null
-    const cb = (data: FavoriteBookmark | null) => {
+    const cb = (data: Bookmark | null) => {
       if (data) callback(data)
       bookmarkEdit?.unmount()
       document.body.removeChild(div)
@@ -482,7 +483,7 @@ export default class FavoriteBox extends Vue {
 
   editFavorite (index: number) {
     const favorite = this.favoriteBookmark[index]
-    const callback = (data: FavoriteBookmark) => {
+    const callback = (data: Bookmark) => {
       if (favorite) {
         this.favoriteBookmark[index] = data
       } else {

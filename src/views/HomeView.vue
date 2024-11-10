@@ -14,7 +14,7 @@
       @updateDirectLinks="updateDirectLinks"/>
     <SideBar></SideBar>
   </div>
-  <small v-if="message"> {{ message }}</small>
+  <small v-show="message" :style="{'background-color': messageColor}"> {{ message }}</small>
 </template>
 
 <script lang="ts">
@@ -37,6 +37,7 @@ import TabAsync from '@/utils/tabsync'
 export default class HomeView extends Vue {
   showFavorite = false
   message = ''
+  messageColor = 'black'
   tabAsync = new TabAsync()
 
   updateDirectLinks () {
@@ -59,7 +60,8 @@ export default class HomeView extends Vue {
   }
 
   messageId: number | null = null
-  showMessage (message: string) {
+  showMessage (message: string, color: string) {
+    this.messageColor = color
     this.message = message
 
     if (this.messageId !== null) {
@@ -102,7 +104,6 @@ small {
   line-height: 16px;
   font-size: 14px;
   border-radius: 14px;
-  background-color: #0000ff88;
   color: white;
 }
 

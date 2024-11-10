@@ -1,20 +1,10 @@
 import axios from 'axios'
 
-interface FavoriteBookmark {
-  name: string
-  url: string
-}
-
 interface Bookmark {
   name: string
   url?: string
-}
-
-interface DirectLink {
-  name: string
-  url: string
-  icon: string
-  color: string
+  icon?: string
+  color?: string
 }
 
 interface FilePosition {
@@ -70,10 +60,16 @@ interface FileDetail {
 }
 */
 
+// interface WallpaperData {
+//   url: string
+//   color: string
+// }
+
 interface SyncData {
-  favorite: FavoriteBookmark[]
+  favorite: Bookmark[]
   bookmark: chrome.bookmarks.BookmarkTreeNode
-  directLinks: DirectLink[] | null
+  directLinks: Bookmark[] | null
+  wallpaper?: string | null
 }
 
 async function getFileDetail (position: FilePosition): Promise<FileDetail | null> {
@@ -84,12 +80,15 @@ async function getFileDetail (position: FilePosition): Promise<FileDetail | null
   return res?.data as FileDetail | null
 }
 
-async function uploadBookmark (fileContent: string, position: FilePosition, overwrite: boolean) {
+async function uploadBookmark (fileContent: string, position: FilePosition, overwrite: boolean): Promise<boolean> {
   // https://cloud.seafile.com/api2/repos/{repo-id}/upload-link/?p=/upload-dir
   // Get Upload Link
   const link = `${position.host}/api2/repos/${position.repoId}/upload-link/?p=${encodeURIComponent(position.folder)}`
   const uploadLink = (await axios.get(link))?.data
-  if (!uploadLink) throw new Error('无法获取上传链接！')
+  if (!uploadLink) {
+    console.error('获取上传链接失败！')
+    return false
+  }
   const data = new FormData()
   const fileName = position.fileName
   data.append('file', new Blob([fileContent], { type: 'application/json' }), fileName)
@@ -97,7 +96,11 @@ async function uploadBookmark (fileContent: string, position: FilePosition, over
   data.append('replace', overwrite ? '1' : '0')
 
   const res2 = await axios.post(uploadLink, data)
-  if (!res2.data) throw new Error('上传文件失败！')
+  if (res2.status !== 200 || !res2.data) {
+    console.error('上传文件失败！')
+    return false
+  }
+  return true
 }
 
 async function downloadFile (position: FilePosition): Promise<SyncData | null> {
@@ -112,7 +115,8 @@ async function downloadFile (position: FilePosition): Promise<SyncData | null> {
   if (res.status === 200) {
     return res.data
   }
+  console.error('Download File Failed!')
   return null
 }
 
-export { FavoriteBookmark, FileDetail, FilePosition, DirectLink, Bookmark, getFileDetail, uploadBookmark, downloadFile }
+export { FileDetail, FilePosition, Bookmark, getFileDetail, uploadBookmark, downloadFile }

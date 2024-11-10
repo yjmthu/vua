@@ -4,19 +4,19 @@
     <h4><span>书签编辑</span></h4>
     <div>
       <span>名称</span>
-      <input type="text" name="name" v-model="temp.name">
+      <input type="text" name="name" v-model="content.name">
     </div>
-    <div v-if="'url' in temp">
+    <div v-if="'url' in content">
       <span>链接</span>
-      <input type="url" name="url" v-model="temp.url">
+      <input type="url" name="url" v-model="content.url">
     </div>
-    <div v-if="'icon' in temp">
+    <div v-if="'icon' in content">
       <span>图标</span>
-      <input type="url" name="icon" v-model="(temp as DirectLink).icon">
+      <input type="url" name="icon" v-model="content.icon">
     </div>
-    <div v-if="'color' in temp">
+    <div v-if="'color' in content">
       <span>背景色</span>
-      <input type="text" name="color" v-model="(temp as DirectLink).color">
+      <input type="text" name="color" v-model="content.color">
     </div>
     <div>
       <button type="button" @click="cancelConfig">取消</button>
@@ -28,7 +28,7 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
-import { FavoriteBookmark, DirectLink, Bookmark } from '@/utils/typedef'
+import { Bookmark } from '@/utils/typedef'
 
 @Options({
   components: {
@@ -39,20 +39,19 @@ import { FavoriteBookmark, DirectLink, Bookmark } from '@/utils/typedef'
   ]
 })
 export default class BookmarkEdit extends Vue {
-  favorite!: FavoriteBookmark | DirectLink | null
-  temp: FavoriteBookmark | DirectLink | Bookmark = {
-    name: '',
-    url: ''
+  bookmark!: Bookmark
+  content: Bookmark = {
+    name: '新书签'
   }
 
-  callback!: (data: FavoriteBookmark | DirectLink | Bookmark | null) => void
+  callback!: (data: Bookmark | null) => void
 
   mounted (): void {
-    this.temp = JSON.parse(JSON.stringify(this.favorite))
+    this.content = JSON.parse(JSON.stringify(this.bookmark))
   }
 
   confirmConfig () {
-    this.callback(this.temp)
+    this.callback(this.content)
   }
 
   cancelConfig () {
