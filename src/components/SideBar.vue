@@ -38,9 +38,13 @@
       <h3>壁纸设置</h3>
       <div id="schedule-config">
         <h4>壁纸配置同步</h4>
-        <select v-model="wallpaperDataIndex" class="side-bar-input">
+        <select v-model="wallpaperDataIndex"
+          @contextmenu.prevent="changeWallpaperDataName"
+          class="side-bar-input">
           <option value="-1">本地配置</option>
-          <option v-for="(item, index) in wallpaperData" :value="index" :key="index">{{ item.name }}</option>
+          <option v-for="(item, index) in wallpaperData"
+            :value="index"
+            :key="index">{{ item.name }}</option>
           <option value="-2">新建配置</option>
         </select>
         <h4>自动切换模式</h4>
@@ -166,8 +170,7 @@ export default class SideBar extends Vue {
       }
       this.$emit('showEditBox', bookmark, callback)
       return
-    }
-    if (index === '-1') {
+    } else if (index === '-1') {
       this._wallpaperDataIndex = index
       this.readDeployData()
       this.readFavoriteImageList()
@@ -190,6 +193,25 @@ export default class SideBar extends Vue {
 
   get wallpaperDataIndex () {
     return this._wallpaperDataIndex
+  }
+
+  changeWallpaperDataName () {
+    const index = parseInt(this.wallpaperDataIndex)
+    if (index < 0) return
+    const bookmark: Bookmark = {
+      name: this.wallpaperData[index].name
+    }
+    const callback = (data: Bookmark) => {
+      if (!data.name.length) {
+        if (!confirm('名称为空，是否确认删除该配置？')) return
+        this.wallpaperData.splice(index, 1)
+        this.wallpaperDataIndex = '-1'
+      } else {
+        this.wallpaperData[index].name = data.name
+      }
+      this.saveWallpaperData(this.wallpaperData)
+    }
+    this.$emit('showEditBox', bookmark, callback)
   }
 
   uploadSyncData () {
@@ -351,10 +373,13 @@ export default class SideBar extends Vue {
     const index = parseInt(this.wallpaperDataIndex)
     if (index >= 0 && index < data.length) {
       const current = data[index]
+      const changed = current.schedule.currentImage !== this.scheduleData.currentImage
       this.scheduleData = current.schedule
       this.favoriteImageList = current.favorite
       this.deployData = current.deploy
-      this.startSchedule()
+      if (changed) {
+        this.startSchedule()
+      }
     } else {
       this.wallpaperDataIndex = '-1'
     }

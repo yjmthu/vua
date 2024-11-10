@@ -50,6 +50,7 @@ export default class HomeView extends Vue {
   message = ''
   messageColor = 'black'
   tabAsync = new TabAsync()
+  // syncing = false
 
   mounted (): void {
     setTimeout(() => {
