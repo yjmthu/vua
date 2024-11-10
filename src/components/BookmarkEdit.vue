@@ -35,7 +35,7 @@ import { Bookmark } from '@/utils/typedef'
     SvgIcon
   },
   props: [
-    'favorite', 'callback'
+    'bookmark', 'callback'
   ]
 })
 export default class BookmarkEdit extends Vue {

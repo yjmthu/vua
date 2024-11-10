@@ -30,13 +30,19 @@
       </ul>
       <h3>收藏预览</h3>
       <ul class="image-list" v-if="showSideBar">
-        <li v-for="item in favoriteImageViewList" :key="item">
+        <li v-for="item in viewList" :key="item">
           <img :src="item" :alt="getNameFromThumbnail(item)" @click="setFromFavorite(item)"/>
           <!-- <div>{{ item }}</div> -->
         </li>
       </ul>
       <h3>壁纸设置</h3>
       <div id="schedule-config">
+        <h4>壁纸配置同步</h4>
+        <select v-model="wallpaperDataIndex" class="side-bar-input">
+          <option value="-1">本地配置</option>
+          <option v-for="(item, index) in wallpaperData" :value="index" :key="index">{{ item.name }}</option>
+          <option value="-2">新建配置</option>
+        </select>
         <h4>自动切换模式</h4>
         <!-- radio button to choose schedule mode -->
         <select v-model="scheduleMode" class="side-bar-input">
@@ -70,36 +76,15 @@
 
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { FilePosition, getFileDetail } from '@/utils/typedef'
+import { FilePosition, getFileDetail, DeployData, Bookmark, ScheduleData, WallpaperData } from '@/utils/typedef'
 import axios from 'axios'
 import HugeStorage from '@/utils/storage'
+import TabAsync from '@/utils/tabsync'
 
 interface FolderContent {
   name: string
   id: string
   type: string
-}
-
-interface DeployData {
-  lib: string
-  thumbnail: string
-  filesList: string[]
-}
-
-interface Icons {
-  [key: string]: string;
-}
-
-interface ScheduleData {
-  displayMode: 'static' | 'newtab' | 'timer'
-  source: 'favorite' | 'deploy'
-  currentImage: string
-  // timestamp in second
-  lastChange: number
-  // interval in second
-  interval: number
-  // interval unit to show
-  intervalUnit: 'second' | 'minute' | 'hour' | 'day'
 }
 
 function getFavoriteImageList () {
@@ -122,18 +107,23 @@ function getFavoriteImageList () {
 @Options({
   components: {
     SvgIcon
+  },
+  props: {
+    tabAsync: TabAsync
   }
 })
 export default class SideBar extends Vue {
+  tabAsync!: TabAsync
   showSideBar = false
   domain = 'cloud.tsinghua.edu.cn'
   host = `https://${this.domain}`
+  _wallpaperDataIndex = '-1'
+  wallpaperData: WallpaperData[] = []
   folderContent: FolderContent[] = []
   currentPath: FolderContent[] = []
   folderContentStack: FolderContent[][] = []
   deployData: DeployData | null = null
   favoriteImageList: string[] = []
-  favoriteImageViewList: string[] = []
   timerId: number | null = null
   scheduleData: ScheduleData = {
     displayMode: 'timer',
@@ -146,10 +136,51 @@ export default class SideBar extends Vue {
 
   storage = new HugeStorage('backgroundImage')
 
-  icons: Icons = {
+  icons: {[key: string]: string} = {
     dir: 'Folder',
     file: 'Document',
     mine: 'Gift'
+  }
+
+  set wallpaperDataIndex (index: string) {
+    if (index === this._wallpaperDataIndex) return
+
+    if (index === '-2') {
+      const bookmark: Bookmark = {
+        name: '新配置'
+      }
+      const callback = (data: Bookmark) => {
+        this.wallpaperData.push({
+          name: data.name,
+          schedule: this.scheduleData,
+          favorite: this.favoriteImageList,
+          deploy: this.deployData
+        })
+        this._wallpaperDataIndex = (this.wallpaperData.length - 1).toString()
+        this.saveWallpaperData(this.wallpaperData)
+        this.saveWallpaperDataIndex()
+
+        this.uploadSyncData()
+      }
+      this.$emit('showEditBox', bookmark, callback)
+      return
+    }
+    this._wallpaperDataIndex = index
+    if (index === '-1') {
+      this.readDeployData()
+      this.readFavoriteImageList()
+      this.readScheduleData()
+    }
+    this.startSchedule()
+  }
+
+  get wallpaperDataIndex () {
+    return this._wallpaperDataIndex
+  }
+
+  uploadSyncData () {
+    console.log('上传壁纸数据')
+    this.$emit('uploadSyncData')
   }
 
   hideWhenClick (event: MouseEvent) {
@@ -162,25 +193,57 @@ export default class SideBar extends Vue {
   mounted (): void {
     document.addEventListener('click', this.hideWhenClick.bind(this))
 
-    const schedule = localStorage.getItem('scheduleData')
-    if (schedule) {
-      this.scheduleData = JSON.parse(schedule)
-    }
+    this.readWallpaperData()
+    this.readScheduleData()
+    this.readFavoriteImageList()
+    this.readDeployData()
+    this.readWallpaperDataIndex()
+    this.updateDetailData()
 
+    this.startSchedule()
+
+    this.tabAsync.addListener('FAVORITE_IMAGE_CHANGE', () => {
+      this.readFavoriteImageList()
+    })
+
+    this.tabAsync.addListener('SCHEDULE_DATA_CHANGE', () => {
+      this.readWallpaperData()
+      this.startSchedule()
+    })
+
+    this.tabAsync.addListener('DEPLOY_DATA_CHANGE', () => {
+      this.readDeployData()
+    })
+
+    this.tabAsync.addListener('WALLPAPERDATA_INDEX_CHANGE', () => {
+      this.readWallpaperDataIndex()
+      this.updateDetailData()
+    })
+
+    this.tabAsync.addListener('WALLPAPERDATA_CHANGE', () => {
+      this.readWallpaperData()
+      this.updateDetailData()
+    })
+  }
+
+  readFavoriteImageList () {
     const favorite = localStorage.getItem('favoriteImageList')
     if (favorite) {
       this.favoriteImageList = JSON.parse(favorite)
-      this.updateViewList()
     } else {
       this.favoriteImageList = getFavoriteImageList()
       localStorage.setItem('favoriteImageList', JSON.stringify(this.favoriteImageList))
     }
+  }
 
-    const data = localStorage.getItem('deployData')
-    if (data) {
-      this.deployData = JSON.parse(data)
+  saveFavoriteImageList () {
+    if (this.wallpaperDataIndex === '-1') {
+      localStorage.setItem('favoriteImageList', JSON.stringify(this.favoriteImageList))
+      this.tabAsync.postMessage({ name: 'FAVORITE_IMAGE_CHANGE' })
+    } else {
+      this.wallpaperData[parseInt(this.wallpaperDataIndex)].favorite = this.favoriteImageList
+      this.saveWallpaperData(this.wallpaperData)
     }
-    this.startSchedule()
   }
 
   beforeDestroy (): void {
@@ -196,7 +259,98 @@ export default class SideBar extends Vue {
   }
 
   saveScheduleData () {
-    localStorage.setItem('scheduleData', JSON.stringify(this.scheduleData))
+    if (this.wallpaperDataIndex === '-1') {
+      localStorage.setItem('scheduleData', JSON.stringify(this.scheduleData))
+      this.tabAsync.postMessage({ name: 'SCHEDULE_DATA_CHANGE' })
+    } else {
+      this.wallpaperData[parseInt(this.wallpaperDataIndex)].schedule = this.scheduleData
+      this.saveWallpaperData(this.wallpaperData)
+    }
+  }
+
+  readScheduleData () {
+    const data = localStorage.getItem('scheduleData')
+    if (data) {
+      this.scheduleData = JSON.parse(data)
+    }
+  }
+
+  readDeployData () {
+    const data = localStorage.getItem('deployData')
+    if (data) {
+      this.deployData = JSON.parse(data)
+    }
+  }
+
+  saveDeployData () {
+    if (this.wallpaperDataIndex === '-1') {
+      localStorage.setItem('deployData', JSON.stringify(this.deployData))
+      this.tabAsync.postMessage({ name: 'DEPLOY_DATA_CHANGE' })
+    } else {
+      this.wallpaperData[parseInt(this.wallpaperDataIndex)].deploy = this.deployData
+      this.saveWallpaperData(this.wallpaperData)
+    }
+  }
+
+  readWallpaperDataIndex () {
+    const index = localStorage.getItem('wallpaperDataIndex')
+    if (index) {
+      this.wallpaperDataIndex = index
+    }
+  }
+
+  updateDetailData () {
+    const i = parseInt(this.wallpaperDataIndex)
+    if (i >= 0 && i < this.wallpaperData.length) {
+      const current = this.wallpaperData[i]
+      this.scheduleData = current.schedule
+      this.favoriteImageList = current.favorite
+      this.deployData = current.deploy
+    } else {
+      this.wallpaperDataIndex = '-1'
+    }
+  }
+
+  saveWallpaperDataIndex () {
+    localStorage.setItem('wallpaperDataIndex', this.wallpaperDataIndex.toString())
+    this.tabAsync.postMessage({ name: 'WALLPAPERDATA_INDEX_CHANGE' })
+  }
+
+  readWallpaperData () {
+    const data = localStorage.getItem('wallpaperData')
+    if (data) {
+      this.wallpaperData = JSON.parse(data)
+    }
+  }
+
+  saveWallpaperData (data: WallpaperData[]) {
+    this.wallpaperData = data
+    localStorage.setItem('wallpaperData', JSON.stringify(data))
+    this.tabAsync.postMessage({ name: 'WALLPAPERDATA_CHANGE' })
+    this.uploadSyncData()
+  }
+
+  importWallpaperData (data: WallpaperData[]) {
+    if (parseInt(this.wallpaperDataIndex) >= data.length) {
+      this.wallpaperDataIndex = '-1'
+    }
+
+    const index = parseInt(this.wallpaperDataIndex)
+    if (index >= 0 && index < data.length) {
+      const current = data[index]
+      this.scheduleData = current.schedule
+      this.favoriteImageList = current.favorite
+      this.deployData = current.deploy
+      this.startSchedule()
+    } else {
+      this.wallpaperDataIndex = '-1'
+    }
+
+    this.saveWallpaperData(data)
+  }
+
+  exportWallpaperData () {
+    return this.wallpaperData
   }
 
   get scheduleSource () {
@@ -320,16 +474,17 @@ export default class SideBar extends Vue {
     }
   }
 
-  updateViewList () {
-    this.favoriteImageViewList = []
+  viewList () {
+    const viewList = []
     for (const item of this.favoriteImageList) {
       if (!item.startsWith(this.host)) continue
       // https://cloud.tsinghua.edu.cn/lib/6ab41ae3-06dc-483b-9606-4a55c0f9925e/file/%E6%A1%8C%E9%9D%A2%E5%A3%81%E7%BA%B8/wallhaven-kx8vmm.jpg?dl=1
       const regex = /^https:\/\/cloud.tsinghua.edu.cn\/lib\/(.{36})\/file\/(.*)\?dl=1$/g
       const match = regex.exec(item)
       if (!match) continue
-      this.favoriteImageViewList.push(`${this.host}/thumbnail/${match[1]}/192/${match[2]}`)
+      viewList.push(`${this.host}/thumbnail/${match[1]}/192/${match[2]}`)
     }
+    return viewList
   }
 
   async setBackgroundImage (url: string) {
@@ -379,12 +534,6 @@ export default class SideBar extends Vue {
   toggleFavorite () {
     if (!this.scheduleData.currentImage.length) return
 
-    // update favorite list from localStorage
-    const favorite = localStorage.getItem('favoriteImageList')
-    if (favorite) {
-      this.favoriteImageList = JSON.parse(favorite)
-    }
-
     const index = this.favoriteImageList.indexOf(this.scheduleData.currentImage)
     if (index === -1) {
       this.favoriteImageList.push(this.scheduleData.currentImage)
@@ -392,8 +541,7 @@ export default class SideBar extends Vue {
       this.favoriteImageList.splice(index, 1)
     }
 
-    this.updateViewList()
-    localStorage.setItem('favoriteImageList', JSON.stringify(this.favoriteImageList))
+    this.saveFavoriteImageList()
   }
 
   isFavorite () {
@@ -512,7 +660,7 @@ export default class SideBar extends Vue {
       return
     }
     this.deployData = { lib, thumbnail, filesList }
-    localStorage.setItem('deployData', JSON.stringify(this.deployData))
+    this.saveDeployData()
     alert('部署成功！')
     this.startSchedule()
   }

@@ -3,16 +3,21 @@
     <div id="logo" ref="logo" @click="toggleFavrotite"></div>
     <DirectLinks ref="directLinks"
       :tabAsync="tabAsync"
-      @linkChanged="linkChanged"/>
+      @showEditBox="showEditBox"
+      @uploadSyncData="uploadSyncData"/>
     <SearchBox
       @engineChanged="changeEngineLogo"/>
     <FavoriteBox ref="favoriteBox"
       v-show="showFavorite"
       :tabAsync="tabAsync"
+      @uploadSyncData="uploadSyncData"
+      @downloadSyncData="downloadSyncData"
       @showMessage="showMessage"
-      @toggleVisbility="toggleFavrotite"
-      @updateDirectLinks="updateDirectLinks"/>
-    <SideBar></SideBar>
+      @showEditBox="showEditBox"
+      @toggleVisbility="toggleFavrotite"/>
+    <SideBar ref="sideBar"
+      @uploadSyncData="uploadSyncData"
+      @showEditBox="showEditBox"/>
   </div>
   <small v-show="message" :style="{'background-color': messageColor}"> {{ message }}</small>
 </template>
@@ -24,14 +29,18 @@ import SideBar from '@/components/SideBar.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import FavoriteBox from '@/components/FavoriteBox.vue'
 import DirectLinks from '@/components/DirectLinks.vue'
+import BookmarkEdit from './BookmarkEdit.vue'
 import TabAsync from '@/utils/tabsync'
+import { FilePosition, SyncData, Bookmark, uploadSyncData, getFileDetail, downloadFile } from '@/utils/typedef'
+import { createApp, App } from 'vue'
 
 @Options({
   components: {
     SearchBox,
     FavoriteBox,
     DirectLinks,
-    SideBar
+    SideBar,
+    BookmarkEdit
   }
 })
 export default class HomeView extends Vue {
@@ -40,8 +49,10 @@ export default class HomeView extends Vue {
   messageColor = 'black'
   tabAsync = new TabAsync()
 
-  updateDirectLinks () {
-    (this.$refs.directLinks as DirectLinks).readDirectLinks()
+  mounted (): void {
+    setTimeout(() => {
+      this.checkSyncUpdate()
+    }, 500)
   }
 
   toggleFavrotite () {
@@ -54,14 +65,15 @@ export default class HomeView extends Vue {
     logo.style.backgroundImage = `url(./icons/${logoName}.svg)`
   }
 
-  linkChanged () {
-    const favoriteBox = this.$refs.favoriteBox as FavoriteBox
-    favoriteBox.uploadBookmarks()
-  }
-
   messageId: number | null = null
-  showMessage (message: string, color: string) {
-    this.messageColor = color
+  showMessage (message: string, type: 'info' | 'warn' | 'error') {
+    const colorMap = {
+      info: '#0000ff88',
+      warn: '#ffff0088',
+      error: '#ff000088'
+    }
+
+    this.messageColor = colorMap[type]
     this.message = message
 
     if (this.messageId !== null) {
@@ -72,6 +84,130 @@ export default class HomeView extends Vue {
       this.message = ''
       this.messageId = null
     }, 3000)
+  }
+
+  getBookmarkPosition (): FilePosition | null {
+    const syncString = localStorage.getItem('bookmarkSync')
+    return syncString ? JSON.parse(syncString) as FilePosition : null
+  }
+
+  saveSyncTime (time: number) {
+    localStorage.setItem('bookmarkTime', time.toString())
+  }
+
+  readSyncTime (): number {
+    const time = localStorage.getItem('bookmarkTime')
+    if (time) {
+      return parseInt(time)
+    }
+    return 0
+  }
+
+  async checkSyncUpdate () {
+    if (this.tabAsync.otherTabCount > 0) {
+      console.log('存在其他标签页，无需同步。')
+      return
+    }
+
+    if (!chrome.bookmarks) {
+      return
+    }
+
+    const position = this.getBookmarkPosition()
+    if (!position) {
+      return
+    }
+
+    const detail = await getFileDetail(position)
+    const time = this.readSyncTime()
+    if (detail && detail.mtime > time) {
+      if (confirm('检测到云端书签有更新，是否下载？')) {
+        await this.downloadSyncData(detail.mtime)
+      }
+      // await this.downloadBookmarks(detail.mtime)
+    } else if (detail) {
+      console.log(`本地书签时间：${new Date(time * 1000).toLocaleString()}`)
+      console.log(`云端书签时间：${new Date(detail.mtime * 1000).toLocaleString()}`)
+      console.log('书签无需更新。')
+    }
+  }
+
+  async uploadSyncData () {
+    if (!chrome.runtime) return
+    const position = this.getBookmarkPosition()
+    if (!position) {
+      this.showMessage('同步失败，未选择云端存储位置！', 'warn')
+      return
+    }
+
+    const favoriteBox = this.$refs.favoriteBox as FavoriteBox
+    const wallpaperBar = this.$refs.sideBar as SideBar
+    const directLinks = this.$refs.directLinks as DirectLinks
+    const syncData: SyncData = {
+      bookmark: favoriteBox.exportBookmarkData(),
+      directLinks: directLinks.exportDirectLinkData(),
+      wallpaper: wallpaperBar.exportWallpaperData()
+    }
+    await uploadSyncData(syncData, position, true)
+    const detail = await getFileDetail(position)
+    if (detail) {
+      this.saveSyncTime(detail.mtime)
+      this.showMessage('上传书签成功！', 'info')
+    } else {
+      this.showMessage('上传书签失败，无法获取文件信息！', 'error')
+    }
+  }
+
+  async downloadSyncData (timestamp?: number) {
+    const position = this.getBookmarkPosition()
+    if (!position) return false
+
+    const data = await downloadFile(position)
+    if (!data) {
+      this.showMessage('下载书签失败！', 'error')
+      return false
+    }
+
+    if (data.bookmark) {
+      const favoriteBox = this.$refs.favoriteBox as FavoriteBox
+      await favoriteBox.importBookmarkData(data.bookmark)
+    }
+    if (data.directLinks) {
+      const directLinks = this.$refs.directLinks as DirectLinks
+      directLinks.importDirectLinks(data.directLinks)
+    }
+    if (data.wallpaper) {
+      const wallpaperBar = this.$refs.sideBar as SideBar
+      wallpaperBar.importWallpaperData(data.wallpaper)
+    }
+    if (timestamp === undefined) {
+      const detail = await getFileDetail(position)
+      if (!detail) {
+        this.showMessage('下载书签信息失败！', 'warn')
+        return false
+      }
+      timestamp = detail.mtime
+    }
+    this.saveSyncTime(timestamp)
+    this.showMessage('下载书签成功！', 'info')
+    return true
+  }
+
+  showEditBox (data: Bookmark, callback: ((data: Bookmark) => void) | ((data: Bookmark) => void)) {
+    // create 'bookmark-edit' element
+    const div = document.createElement('div')
+    div.style.position = 'fixed'
+    // div.style.zIndex = '1000'
+    document.body.appendChild(div)
+    let bookmarkEdit: App<Element> | null = null
+    const cb = (data: Bookmark | null) => {
+      if (data) callback(data)
+      bookmarkEdit?.unmount()
+      document.body.removeChild(div)
+    }
+    bookmarkEdit = createApp(BookmarkEdit, { bookmark: data, callback: cb })
+    // mount it on an element
+    bookmarkEdit.mount(div)
   }
 }
 </script>

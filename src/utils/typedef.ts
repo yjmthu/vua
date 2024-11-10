@@ -64,12 +64,40 @@ interface FileDetail {
 //   url: string
 //   color: string
 // }
+interface DeployData {
+  lib: string
+  thumbnail: string
+  filesList: string[]
+}
+
+interface ScheduleData {
+  displayMode: 'static' | 'newtab' | 'timer'
+  source: 'favorite' | 'deploy'
+  currentImage: string
+  // timestamp in second
+  lastChange: number
+  // interval in second
+  interval: number
+  // interval unit to show
+  intervalUnit: 'second' | 'minute' | 'hour' | 'day'
+}
+
+interface WallpaperData {
+  name: string
+  deploy: DeployData | null
+  schedule: ScheduleData
+  favorite: string[]
+}
+
+interface BookmarkData {
+  bookmarks: chrome.bookmarks.BookmarkTreeNode
+  favorites: Bookmark[]
+}
 
 interface SyncData {
-  favorite: Bookmark[]
-  bookmark: chrome.bookmarks.BookmarkTreeNode
+  bookmark: BookmarkData
   directLinks: Bookmark[] | null
-  wallpaper?: string | null
+  wallpaper: WallpaperData[] | null
 }
 
 async function getFileDetail (position: FilePosition): Promise<FileDetail | null> {
@@ -80,7 +108,11 @@ async function getFileDetail (position: FilePosition): Promise<FileDetail | null
   return res?.data as FileDetail | null
 }
 
-async function uploadBookmark (fileContent: string, position: FilePosition, overwrite: boolean): Promise<boolean> {
+async function uploadSyncData (syncData: SyncData, position: FilePosition, overwrite: boolean): Promise<boolean> {
+  return uploadFile(JSON.stringify(syncData), position, overwrite)
+}
+
+async function uploadFile (fileContent: string, position: FilePosition, overwrite: boolean): Promise<boolean> {
   // https://cloud.seafile.com/api2/repos/{repo-id}/upload-link/?p=/upload-dir
   // Get Upload Link
   const link = `${position.host}/api2/repos/${position.repoId}/upload-link/?p=${encodeURIComponent(position.folder)}`
@@ -119,4 +151,4 @@ async function downloadFile (position: FilePosition): Promise<SyncData | null> {
   return null
 }
 
-export { FileDetail, FilePosition, Bookmark, getFileDetail, uploadBookmark, downloadFile }
+export { DeployData, ScheduleData, FileDetail, FilePosition, Bookmark, SyncData, WallpaperData, BookmarkData, getFileDetail, uploadSyncData, downloadFile }

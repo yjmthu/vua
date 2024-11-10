@@ -1,6 +1,6 @@
 <template>
   <ul class="row-center">
-    <li v-for="(item, index) in directLinks" :key="index" @contextmenu.prevent="showBookmarkEdit(index)">
+    <li v-for="(item, index) in directLinks" :key="index" @contextmenu.prevent="showDirectLinkEdit(index)">
       <a :href="item.url" target="_blank">
         <img :src="item.icon" :style="{'background-color': item.color}"/>
         <div>{{ item.name }}</div>
@@ -11,10 +11,8 @@
 
 <script lang="ts">
 import { Options, Vue } from 'vue-class-component'
-import { DirectLink } from '@/utils/typedef'
-import { App, createApp } from 'vue'
+import { Bookmark } from '@/utils/typedef'
 import TabAsync from '@/utils/tabsync'
-import BookmarkEdit from './BookmarkEdit.vue'
 
 @Options({
   props: {
@@ -23,7 +21,7 @@ import BookmarkEdit from './BookmarkEdit.vue'
 })
 export default class DirectLinks extends Vue {
   tabAsync!: TabAsync
-  public directLinks: DirectLink[] = [
+  public directLinks: Bookmark[] = [
     {
       name: '网络学堂',
       url: 'https://learn.tsinghua.edu.cn/f/login/',
@@ -77,7 +75,7 @@ export default class DirectLinks extends Vue {
   readDirectLinks () {
     const data = localStorage.getItem('directLinks')
     if (data) {
-      this.directLinks = JSON.parse(data) as DirectLink[]
+      this.directLinks = JSON.parse(data) as Bookmark[]
     } else {
       this.writeDirectLinks()
     }
@@ -88,6 +86,19 @@ export default class DirectLinks extends Vue {
     this.tabAsync.postMessage({ name: 'DIRECT_LINK_CHANGE' })
   }
 
+  importDirectLinks (data: Bookmark[]) {
+    this.directLinks = data
+    this.writeDirectLinks()
+  }
+
+  exportDirectLinkData () {
+    return this.directLinks
+  }
+
+  uploadSyncData () {
+    this.$emit('uploadSyncData')
+  }
+
   mounted () {
     this.readDirectLinks()
 
@@ -96,23 +107,16 @@ export default class DirectLinks extends Vue {
     })
   }
 
-  showBookmarkEdit (index: number) {
+  showDirectLinkEdit (index: number) {
     const favorite = this.directLinks[index]
-    const div = document.createElement('div')
-    document.body.appendChild(div)
-    div.style.position = 'fixed'
-    let bookmarkEdit: App<Element> | null = null
-    const callback = (data: DirectLink | null) => {
-      if (data) {
-        this.directLinks[index] = data
-        this.writeDirectLinks()
-        this.$emit('linkChanged')
-      }
-      bookmarkEdit?.unmount()
-      document.body.removeChild(div)
+
+    const callback = (data: Bookmark) => {
+      this.directLinks[index] = data
+      this.writeDirectLinks()
+      this.uploadSyncData()
     }
-    bookmarkEdit = createApp(BookmarkEdit, { favorite, callback })
-    bookmarkEdit.mount(div)
+
+    this.$emit('showEditBox', favorite, callback)
   }
 }
 </script>
