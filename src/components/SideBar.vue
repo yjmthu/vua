@@ -142,6 +142,10 @@ export default class SideBar extends Vue {
     mine: 'Gift'
   }
 
+  showMessage (msg: string, type: 'info' | 'warn' | 'error') {
+    this.$emit('showMessage', msg, type)
+  }
+
   set wallpaperDataIndex (index: string) {
     if (index === this._wallpaperDataIndex) return
 
@@ -159,8 +163,6 @@ export default class SideBar extends Vue {
         this._wallpaperDataIndex = (this.wallpaperData.length - 1).toString()
         this.saveWallpaperData(this.wallpaperData)
         this.saveWallpaperDataIndex()
-
-        this.uploadSyncData()
       }
       this.$emit('showEditBox', bookmark, callback)
       return
@@ -361,7 +363,7 @@ export default class SideBar extends Vue {
     // check if is chrome extention or pure website
     if (!chrome.runtime) {
       this.scheduleData.source = value
-      alert('请使用 Chrome 扩展！')
+      this.showMessage('请使用 Chrome 扩展！', 'warn')
       return
     }
     this.scheduleData.source = value
@@ -474,7 +476,7 @@ export default class SideBar extends Vue {
     }
   }
 
-  viewList () {
+  get viewList () {
     const viewList = []
     for (const item of this.favoriteImageList) {
       if (!item.startsWith(this.host)) continue
@@ -569,7 +571,7 @@ export default class SideBar extends Vue {
   async update () {
     const cookies = await this.getCookies()
     if (cookies.length === 0) {
-      alert('请先登录清华云盘！')
+      this.showMessage('请先登录清华云盘！', 'warn')
       return
     }
     const url = `${this.host}/api/v2.1/repos/?type=mine`
@@ -591,11 +593,11 @@ export default class SideBar extends Vue {
     if (!data) return
     const cookies = await this.getCookies()
     if (cookies.length === 0) {
-      alert('请先登录清华云盘！')
+      this.showMessage('请先登录清华云盘！', 'warn')
       return
     }
     if (data.type !== 'dir' && data.type !== 'mine') {
-      alert('不是文件夹！')
+      this.showMessage('不是文件夹！', 'error')
       return
     }
     let p: string, id: string
@@ -642,7 +644,7 @@ export default class SideBar extends Vue {
 
   deploy () {
     if (!this.currentPath.length) {
-      alert('请选择文件夹！')
+      this.showMessage('请选择文件夹！', 'error')
       return
     }
     const pLib = this.currentPath.map((item, index) => (index ? encodeURIComponent(item.name) : `${item.id}/file`)).join('/')
@@ -656,18 +658,18 @@ export default class SideBar extends Vue {
       return name.endsWith('.jpg') || name.endsWith('.png') || name.endsWith('.jpeg')
     }).map((item) => item.name)
     if (filesList.length === 0) {
-      alert('该文件夹下没有图片！')
+      this.showMessage('该文件夹下没有图片！', 'error')
       return
     }
     this.deployData = { lib, thumbnail, filesList }
     this.saveDeployData()
-    alert('部署成功！')
+    this.showMessage('部署成功！', 'info')
     this.startSchedule()
   }
 
   async config () {
     if (!this.currentPath.length) {
-      alert('请选择文件夹！')
+      this.showMessage('请选择文件夹！', 'error')
       return
     }
 

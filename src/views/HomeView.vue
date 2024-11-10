@@ -16,7 +16,9 @@
       @showEditBox="showEditBox"
       @toggleVisbility="toggleFavrotite"/>
     <SideBar ref="sideBar"
+      :tabAsync="tabAsync"
       @uploadSyncData="uploadSyncData"
+      @showMessage="showMessage"
       @showEditBox="showEditBox"/>
   </div>
   <small v-show="message" :style="{'background-color': messageColor}"> {{ message }}</small>
@@ -29,7 +31,7 @@ import SideBar from '@/components/SideBar.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import FavoriteBox from '@/components/FavoriteBox.vue'
 import DirectLinks from '@/components/DirectLinks.vue'
-import BookmarkEdit from './BookmarkEdit.vue'
+import BookmarkEdit from '@/components/BookmarkEdit.vue'
 import TabAsync from '@/utils/tabsync'
 import { FilePosition, SyncData, Bookmark, uploadSyncData, getFileDetail, downloadFile } from '@/utils/typedef'
 import { createApp, App } from 'vue'
