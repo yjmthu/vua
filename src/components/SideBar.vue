@@ -76,7 +76,7 @@
 
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { FilePosition, getFileDetail, DeployData, Bookmark, ScheduleData, WallpaperData } from '@/utils/typedef'
+import { FilePosition, getFileDetail, DeployData, Bookmark, ScheduleData, WallpaperData, MessageType } from '@/utils/typedef'
 import axios from 'axios'
 import HugeStorage from '@/utils/storage'
 import TabAsync from '@/utils/tabsync'
@@ -142,7 +142,7 @@ export default class SideBar extends Vue {
     mine: 'Gift'
   }
 
-  showMessage (msg: string, type: 'info' | 'warn' | 'error') {
+  showMessage (msg: string, type: MessageType) {
     this.$emit('showMessage', msg, type)
   }
 
@@ -374,7 +374,7 @@ export default class SideBar extends Vue {
     // check if is chrome extention or pure website
     if (!chrome.runtime) {
       this.scheduleData.source = value
-      this.showMessage('请使用 Chrome 扩展！', 'warn')
+      this.showMessage('请使用 Chrome 扩展！', 'warning')
       return
     }
     this.scheduleData.source = value
@@ -584,7 +584,7 @@ export default class SideBar extends Vue {
   async update () {
     const cookies = await this.getCookies()
     if (cookies.length === 0) {
-      this.showMessage('请先登录清华云盘！', 'warn')
+      this.showMessage('请先登录清华云盘！', 'warning')
       return
     }
     const url = `${this.host}/api/v2.1/repos/?type=mine`
@@ -606,7 +606,7 @@ export default class SideBar extends Vue {
     if (!data) return
     const cookies = await this.getCookies()
     if (cookies.length === 0) {
-      this.showMessage('请先登录清华云盘！', 'warn')
+      this.showMessage('请先登录清华云盘！', 'warning')
       return
     }
     if (data.type !== 'dir' && data.type !== 'mine') {

@@ -151,4 +151,15 @@ async function downloadFile (position: FilePosition): Promise<SyncData | null> {
   return null
 }
 
+const messageColor = {
+  error: '#ff000088',
+  success: '#00ff0088',
+  warning: '#ffff0088',
+  info: '#0000ff88'
+}
+
+// the key in the messageColor object
+type MessageType = keyof typeof messageColor
+export { messageColor, MessageType }
+
 export { DeployData, ScheduleData, FileDetail, FilePosition, Bookmark, SyncData, WallpaperData, BookmarkData, getFileDetail, uploadSyncData, downloadFile }

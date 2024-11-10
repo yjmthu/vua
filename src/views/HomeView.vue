@@ -33,7 +33,7 @@ import FavoriteBox from '@/components/FavoriteBox.vue'
 import DirectLinks from '@/components/DirectLinks.vue'
 import BookmarkEdit from '@/components/BookmarkEdit.vue'
 import TabAsync from '@/utils/tabsync'
-import { FilePosition, SyncData, Bookmark, uploadSyncData, getFileDetail, downloadFile } from '@/utils/typedef'
+import { FilePosition, SyncData, Bookmark, uploadSyncData, getFileDetail, downloadFile, MessageType, messageColor } from '@/utils/typedef'
 import { createApp, App } from 'vue'
 
 @Options({
@@ -68,14 +68,8 @@ export default class HomeView extends Vue {
   }
 
   messageId: number | null = null
-  showMessage (message: string, type: 'info' | 'warn' | 'error') {
-    const colorMap = {
-      info: '#0000ff88',
-      warn: '#ffff0088',
-      error: '#ff000088'
-    }
-
-    this.messageColor = colorMap[type]
+  showMessage (message: string, type: MessageType) {
+    this.messageColor = messageColor[type]
     this.message = message
 
     if (this.messageId !== null) {
@@ -123,10 +117,14 @@ export default class HomeView extends Vue {
     const detail = await getFileDetail(position)
     const time = this.readSyncTime()
     if (detail && detail.mtime > time) {
-      if (confirm('检测到云端书签有更新，是否下载？')) {
-        await this.downloadSyncData(detail.mtime)
+      // if (confirm('检测到云端书签有更新，是否下载？')) {
+      //   await this.downloadSyncData(detail.mtime)
+      // }
+      if (await this.downloadSyncData(detail.mtime)) {
+        this.showMessage('下载云端数据成功。', 'success')
+      } else {
+        this.showMessage('下载云端数据失败。', 'error')
       }
-      // await this.downloadBookmarks(detail.mtime)
     } else if (detail) {
       console.log(`本地书签时间：${new Date(time * 1000).toLocaleString()}`)
       console.log(`云端书签时间：${new Date(detail.mtime * 1000).toLocaleString()}`)
@@ -138,7 +136,7 @@ export default class HomeView extends Vue {
     if (!chrome.runtime) return
     const position = this.getBookmarkPosition()
     if (!position) {
-      this.showMessage('同步失败，未选择云端存储位置！', 'warn')
+      this.showMessage('同步失败，未选择云端存储位置！', 'warning')
       return
     }
 
@@ -157,9 +155,9 @@ export default class HomeView extends Vue {
     const detail = await getFileDetail(position)
     if (detail) {
       this.saveSyncTime(detail.mtime)
-      this.showMessage('数据上传成功！', 'info')
+      this.showMessage('数据上传成功！', 'success')
     } else {
-      this.showMessage('无法获取文件信息！', 'warn')
+      this.showMessage('无法获取文件信息！', 'warning')
     }
   }
 
@@ -188,7 +186,7 @@ export default class HomeView extends Vue {
     if (timestamp === undefined) {
       const detail = await getFileDetail(position)
       if (!detail) {
-        this.showMessage('下载书签信息失败！', 'warn')
+        this.showMessage('下载书签信息失败！', 'warning')
         return false
       }
       timestamp = detail.mtime

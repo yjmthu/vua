@@ -32,7 +32,7 @@
 import { Vue, Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
 import TabAsync from '@/utils/tabsync'
-import { Bookmark, BookmarkData } from '@/utils/typedef'
+import { Bookmark, BookmarkData, MessageType } from '@/utils/typedef'
 
 @Options({
   components: {
@@ -176,7 +176,7 @@ export default class FavoriteBox extends Vue {
     })
   }
 
-  showMessage (msg: string, type: 'info' | 'warn' | 'error') {
+  showMessage (msg: string, type: MessageType) {
     this.$emit('showMessage', msg, type)
   }
 
