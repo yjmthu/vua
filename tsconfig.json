@@ -35,7 +35,7 @@
     "src/**/*.vue",
     "tests/**/*.ts",
     "tests/**/*.tsx"
-  ],
+, "src/utils/fireworks.min.js"  ],
   "exclude": [
     "node_modules"
   ]

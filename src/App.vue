@@ -5,6 +5,8 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component'
 import HomeView from './views/HomeView.vue'
+import { SakuraEffetc } from '@/utils/sakura'
+import { FireworksEffext } from '@/utils/fireworks'
 
 @Options({
   components: {
@@ -12,6 +14,20 @@ import HomeView from './views/HomeView.vue'
   }
 })
 export default class App extends Vue {
+  sakura: SakuraEffetc | null = null
+  mounted () {
+    const app = document.getElementById('app')
+    if (!app) return
+    this.sakura = new SakuraEffetc(app)
+    this.sakura.start()
+
+    setTimeout(() => {
+      this.sakura?.stop()
+    }, 10000)
+
+    const fireworks = new FireworksEffext()
+    fireworks.start()
+  }
 }
 </script>
 

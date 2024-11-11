@@ -19,7 +19,7 @@
         <button @click="deploy" class="tooltip" data-tooltip="使用当前文件夹下的图片文件作为背景">部署</button>
         <button @click="config" class="tooltip" data-tooltip="在当前文件夹下存放书签">书签</button>
       </div>
-      <h3>云盘数据</h3>
+      <h3 v-if="isChromeExt">云盘数据</h3>
       <small>{{ currentFolder }}</small>
       <ul class="text-list" v-if="folderContent.length">
         <li v-if="folderContentStack.length !== 0" @click="goBack">..</li>
@@ -28,8 +28,8 @@
           <div>{{ item.name }}</div>
         </li>
       </ul>
-      <h3>收藏预览</h3>
-      <ul class="image-list" v-if="showSideBar">
+      <h3 v-if="isChromeExt">收藏预览</h3>
+      <ul class="image-list" v-if="isChromeExt && showSideBar">
         <li v-for="item in viewList" :key="item">
           <img :src="item" :alt="getNameFromThumbnail(item)" @click="setFromFavorite(item)"/>
           <!-- <div>{{ item }}</div> -->
@@ -71,6 +71,7 @@
           <option value="deploy">部署</option>
         </select>
       </div>
+      <small id="sync-status"> {{ syncStatus }}</small>
     </nav>
   </aside>
 </template>
@@ -113,11 +114,14 @@ function getFavoriteImageList () {
     SvgIcon
   },
   props: {
-    tabAsync: TabAsync
+    tabAsync: TabAsync,
+    syncStatus: String
   }
 })
 export default class SideBar extends Vue {
   tabAsync!: TabAsync
+  syncStatus!: string
+  isChromeExt = typeof chrome !== 'undefined' && chrome.runtime !== undefined
   showSideBar = false
   domain = 'cloud.tsinghua.edu.cn'
   host = `https://${this.domain}`
@@ -800,6 +804,7 @@ nav {
   width: 100%;
   height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   border: none;
   box-sizing: border-box;
   padding: 10px 0 20px;
@@ -979,5 +984,14 @@ input::-webkit-inner-spin-button {
 
 input::-webkit-outer-spin-button{
   -webkit-appearance: none !important;
+}
+
+small#sync-status {
+  font-size: smaller;
+  text-align: right;
+  display: block;
+  user-select: none;
+  margin: 4px 32px;
+  color: #AAA;
 }
 </style>

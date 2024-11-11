@@ -17,6 +17,7 @@
       @toggleVisbility="toggleFavrotite"/>
     <SideBar ref="sideBar"
       :tabAsync="tabAsync"
+      :syncStatus="syncStatus"
       @uploadSyncData="uploadSyncData"
       @showMessage="showMessage"
       @showEditBox="showEditBox"/>
@@ -50,6 +51,7 @@ export default class HomeView extends Vue {
   message = ''
   messageColor = 'black'
   tabAsync = new TabAsync()
+  syncStatus = '数据未同步'
   // syncing = false
 
   mounted (): void {
@@ -127,9 +129,11 @@ export default class HomeView extends Vue {
         this.showMessage('下载云端数据失败。', 'error')
       }
     } else if (detail) {
-      console.log(`本地书签时间：${new Date(time * 1000).toLocaleString()}`)
-      console.log(`云端书签时间：${new Date(detail.mtime * 1000).toLocaleString()}`)
+      this.syncStatus = `同步时间：${new Date(detail.mtime * 1000).toLocaleString()}`
       console.log('书签无需更新。')
+    } else {
+      this.showMessage('无法获取云端书签信息。', 'warning')
+      this.syncStatus = `同步失败，本地时间：${new Date(time * 1000).toLocaleString()}`
     }
   }
 

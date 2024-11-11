@@ -3,7 +3,7 @@
     <nav>
       <div>
         <small @click="() => {currentTab = 0}" :class="{active: currentTab === 0}">收藏</small>
-        <small @click="() => {currentTab = 1}" :class="{active: currentTab === 1}">书签</small>
+        <small v-if="vifBookmarksTab" @click="() => {currentTab = 1}" :class="{active: currentTab === 1}">书签</small>
       </div>
       <div>
         <SvgIcon name="ArrowLeft" size="30px" @click="leaveNode"></SvgIcon>
