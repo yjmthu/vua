@@ -66,7 +66,7 @@ class FireworksEffext {
     this.canvas.style.position = 'fixed'
     this.canvas.style.top = '0'
     this.canvas.style.left = '0'
-    this.canvas.style.zIndex = '99999'
+    this.canvas.style.zIndex = '999'
     this.canvas.style.pointerEvents = 'none'
     if (this.canvas.getContext && window.addEventListener) {
       this.ctx = this.canvas.getContext('2d')

@@ -49,7 +49,8 @@ export default class FavoriteBox extends Vue {
   tabAsync!: TabAsync
   isTrashMode = false
   currentTab = 0
-  isChromeExt = typeof chrome !== 'undefined' && chrome.bookmarks
+  // isChromeExt = false
+  isChromeExt = typeof chrome !== 'undefined' && chrome.bookmarks !== undefined
 
   get vifBookmarksTab () {
     return this.isChromeExt && this.currentTab === 1
@@ -186,6 +187,7 @@ export default class FavoriteBox extends Vue {
     this.tabAsync.addListener('FAVORITE_CHANGE', () => {
       this.readFavoriteBookmarks()
     })
+    // this.isChromeExt = typeof chrome !== 'undefined' && chrome.bookmarks !== undefined
   }
 
   showMessage (msg: string, type: MessageType) {
@@ -445,7 +447,7 @@ export default class FavoriteBox extends Vue {
   // position: relative;
   width: 40%;
   border-radius: 10px;
-  z-index: 100;
+  // z-index: 100;
   padding: 10px 20px 0;
 
   & > div:last-child {

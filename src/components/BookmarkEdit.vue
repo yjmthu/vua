@@ -1,7 +1,7 @@
 <template>
   <div class="center">
     <SvgIcon name="XCircle" size="20px" className="close-button" @click="cancelConfig"/>
-    <h4><span>书签编辑</span></h4>
+    <h4><span>内容编辑</span></h4>
     <div>
       <span>名称</span>
       <input type="text" name="name" v-model="content.name">
@@ -63,7 +63,7 @@ export default class BookmarkEdit extends Vue {
 <style scoped lang="scss">
 div.center {
   color: white;
-  width: 270px;
+  width: 280px;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -73,6 +73,7 @@ div.center {
   border: 2px solid gray;
   border-radius: 6px;
   background-color: rgb(26, 28, 28, 0.5);
+  z-index: 998;
 
   & > * {
     padding: 8px;
