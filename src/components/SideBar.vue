@@ -70,6 +70,11 @@
           <option value="favorite">收藏</option>
           <option value="deploy">部署</option>
         </select>
+        <h4>背景模糊</h4>
+        <div class="side-bar-input">
+          <input type="range" min="0" max="100" step="1" style="width: 80%;" v-model.number="wallBlur" v-on:mousemove="saveScheduleData"/>
+          <div style="position: absolute; top: 0; right: 5%; bottom: 0; padding: 2px; line-height: 22px;"> {{ wallBlur }} </div>
+        </div>
       </div>
       <small id="sync-status"> {{ syncStatus }}</small>
     </nav>
@@ -139,7 +144,8 @@ export default class SideBar extends Vue {
     currentImage: '',
     lastChange: 0,
     interval: 300,
-    intervalUnit: 'second'
+    intervalUnit: 'second',
+    backgroundBlur: 0
   }
 
   storage = new HugeStorage('backgroundImage')
@@ -197,6 +203,22 @@ export default class SideBar extends Vue {
 
   get wallpaperDataIndex () {
     return this.wallDataIndex
+  }
+
+  get wallBlur () {
+    return this.scheduleData.backgroundBlur
+  }
+
+  set wallBlur (value: number) {
+    if (value < 0 || value > 100) return
+
+    const el = document.getElementById('wallpaper')
+    if (el) {
+      el.style.filter = `blur(${value}px)`
+      this.scheduleData.backgroundBlur = value
+    } else {
+      this.showMessage('无法找到背景元素！', 'error')
+    }
   }
 
   changeWallpaperDataName () {
@@ -513,6 +535,10 @@ export default class SideBar extends Vue {
         this.scheduleData.currentImage = curImage
         this.saveScheduleData()
       }
+    }
+
+    if (this.wallBlur) {
+      this.wallBlur = this.scheduleData.backgroundBlur
     }
   }
 
@@ -957,6 +983,7 @@ ul.image-list > li {
 
 .side-bar-input {
   display: block;
+  position: relative;
   box-sizing: border-box;
   padding: 6px;
   width: 90%;

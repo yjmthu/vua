@@ -80,6 +80,7 @@ interface ScheduleData {
   interval: number
   // interval unit to show
   intervalUnit: 'second' | 'minute' | 'hour' | 'day'
+  backgroundBlur: number
 }
 
 interface WallpaperData {
