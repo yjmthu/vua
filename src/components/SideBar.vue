@@ -530,7 +530,7 @@ export default class SideBar extends Vue {
   }
 
   async setBackgroundImage (url: string) {
-    const app = document.getElementById('app')
+    const app = document.getElementById('wallpaper')
     if (!app) return
 
     if (typeof chrome === 'undefined' || chrome.runtime === undefined) {

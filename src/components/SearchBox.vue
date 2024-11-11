@@ -231,6 +231,10 @@ export default class SearchBox extends Vue {
     scale: 1;
     opacity: 1;
   }
+
+  &::placeholder {
+    user-select: none;
+  }
 }
 
 i {

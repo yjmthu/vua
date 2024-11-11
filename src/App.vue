@@ -46,10 +46,6 @@ export default class App extends Vue {
   display: grid;
   align-items: center;
 
-  // background-image: url(https://source.unsplash.com/random);
-  background-size: cover;
-  background-position: center;
-
   --icon-size: 56px;
   --icon-row-size: 620px;
   --input-width: 480px;

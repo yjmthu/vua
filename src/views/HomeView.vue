@@ -1,4 +1,5 @@
 <template>
+  <div id="wallpaper"></div>
   <div id="main">
     <div id="logo" ref="logo" @click="toggleFavrotite"></div>
     <DirectLinks ref="directLinks"
@@ -228,6 +229,21 @@ export default class HomeView extends Vue {
   background-repeat: no-repeat;
   background-size: contain;
   background-position: bottom;
+}
+
+#wallpaper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  // background-image: url(https://source.unsplash.com/random);
+  background-size: cover;
+  background-position: center;
+
+  filter: blur(0px);
+  z-index: auto;
 }
 
 #main {
