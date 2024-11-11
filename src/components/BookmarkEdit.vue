@@ -73,7 +73,7 @@ div.center {
   border: 2px solid gray;
   border-radius: 6px;
   background-color: rgb(26, 28, 28, 0.5);
-  z-index: 998;
+  z-index: 999;
 
   & > * {
     padding: 8px;
