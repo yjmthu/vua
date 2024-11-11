@@ -3,7 +3,7 @@
     <nav>
       <div>
         <small @click="() => {currentTab = 0}" :class="{active: currentTab === 0}">收藏</small>
-        <small v-if="vifBookmarksTab" @click="() => {currentTab = 1}" :class="{active: currentTab === 1}">书签</small>
+        <small v-if="isChromeExt" @click="() => {currentTab = 1}" :class="{active: currentTab === 1}">书签</small>
       </div>
       <div>
         <SvgIcon name="ArrowLeft" size="30px" @click="leaveNode"></SvgIcon>
@@ -49,9 +49,10 @@ export default class FavoriteBox extends Vue {
   tabAsync!: TabAsync
   isTrashMode = false
   currentTab = 0
+  isChromeExt = typeof chrome !== 'undefined' && chrome.bookmarks
 
   get vifBookmarksTab () {
-    return typeof chrome !== 'undefined' && chrome.bookmarks && this.currentTab === 1
+    return this.isChromeExt && this.currentTab === 1
   }
 
   get vifFavoritesTab () {
