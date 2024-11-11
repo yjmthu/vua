@@ -104,8 +104,15 @@ export default class HomeView extends Vue {
   }
 
   async checkSyncUpdate () {
+    const time = this.readSyncTime()
+
     if (this.tabAsync.otherTabCount > 0) {
       console.log('存在其他标签页，无需同步。')
+      if (time > 0) {
+        this.syncStatus = `同步时间：${new Date(time * 1000).toLocaleString()}`
+      } else {
+        this.syncStatus = `本地时间：${new Date().toLocaleString()}`
+      }
       return
     }
 
@@ -119,7 +126,6 @@ export default class HomeView extends Vue {
     }
 
     const detail = await getFileDetail(position)
-    const time = this.readSyncTime()
     if (detail && detail.mtime > time) {
       // if (confirm('检测到云端书签有更新，是否下载？')) {
       //   await this.downloadSyncData(detail.mtime)
