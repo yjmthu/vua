@@ -157,7 +157,7 @@ export default class SearchBox extends Vue {
     if (!event.target) return
     const target = event.target as HTMLInputElement
     if (event.key === 'Tab') {
-      if (this.switchEngine(target.value)) {
+      if (!event.shiftKey && this.switchEngine(target.value)) {
         target.value = target.value.slice(0, -1)
       } else {
         this.shiftEngine(!event.shiftKey)
