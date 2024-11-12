@@ -85,6 +85,7 @@ export default class SearchBox extends Vue {
     const letter = sentence[sentence.length - 1]
     if (!/[a-zA-Z]/.test(letter)) return false
     const index = findEngineByShortCutkey(letter.toLowerCase())
+    if (this.currentEngineIndex === index) return false
     if (index !== -1) {
       this.currentEngineIndex = index
       localStorage.setItem('enginesData', JSON.stringify(this.enginesData))
