@@ -72,8 +72,9 @@
         </select>
         <h4>背景模糊</h4>
         <div class="side-bar-input">
-          <input type="range" min="0" max="100" step="1" style="width: 80%;" v-model.number="wallBlur" v-on:mouseup="saveScheduleData"/>
-          <div style="position: absolute; top: 0; right: 5%; bottom: 0; padding: 2px; line-height: 22px;"> {{ wallBlur }} </div>
+          <input type="range" min="0" max="100" step="1"
+            v-model.number="wallBlur" @mouseup="saveScheduleData" @touchend="saveScheduleData"/>
+          <div> {{ wallBlur }} </div>
         </div>
       </div>
       <small id="sync-status"> {{ syncStatus }}</small>
@@ -322,6 +323,7 @@ export default class SideBar extends Vue {
   }
 
   saveScheduleData () {
+    console.log('Save schedule data.')
     if (this.wallpaperDataIndex === '-1') {
       localStorage.setItem('scheduleData', JSON.stringify(this.scheduleData))
       this.tabAsync.postMessage({ name: 'SCHEDULE_DATA_CHANGE' })
@@ -1013,8 +1015,21 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none !important;
 }
 
-input::-webkit-outer-spin-button{
+input::-webkit-outer-spin-button {
   -webkit-appearance: none !important;
+}
+
+.side-bar-input > input[type=range] {
+  width: 80%;
+
+  & + div {
+    position: absolute;
+    top: 0;
+    right: 5%;
+    bottom: 0;
+    padding: 2px;
+    line-height: 22px;
+  }
 }
 
 small#sync-status {

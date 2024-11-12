@@ -78,6 +78,10 @@ class Sakura {
     }
   }
 
+  isDied () {
+    return this.limit === 0
+  }
+
   draw (context: CanvasRenderingContext2D, image: HTMLImageElement) {
     context.save()
     context.translate(this.x, this.y)
@@ -157,17 +161,22 @@ class SakuraEffetc {
     const w = this.canvas.width
     const h = this.canvas.height
     ctx.clearRect(0, 0, w, h)
-    this.sakuras.forEach(sakura => {
+
+    for (let i = 0; i < this.sakuras.length; i++) {
+      const sakura = this.sakuras[i]
       sakura.update(w, h)
       sakura.draw(ctx, this.image)
-    })
+      if (sakura.isDied()) {
+        this.sakuras.splice(i--, 1)
+      }
+    }
   }
 
-  start () {
+  start (limit = -1) {
     const canvas = this.createCanvas()
     this.sakuras = []
     for (let i = 0; i < this.options.count; i++) {
-      this.sakuras.push(new Sakura(canvas, -1))
+      this.sakuras.push(new Sakura(canvas, limit))
     }
     this.animate()
   }
@@ -179,7 +188,12 @@ class SakuraEffetc {
   }
 
   animate () {
-    if (this.sakuras.length === 0) return
+    if (this.sakuras.length === 0) {
+      if (this.canvas) {
+        this.removeCanvas()
+      }
+      return
+    }
     this.drawSakura()
     requestAnimationFrame(() => this.animate())
   }
