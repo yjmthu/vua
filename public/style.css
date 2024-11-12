@@ -126,3 +126,18 @@ svg.checked {
 ::-webkit-scrollbar-thumb:hover {
   background: #777;
 }
+
+::selection {
+  background:#ff645d;
+  color:white;
+}
+
+::-moz-selection {
+  background:#ccc;
+  color:#ff645d;
+}
+
+::-webkit-selection {
+  background:#ccc;
+  color:#ff645d;
+}

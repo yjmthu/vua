@@ -181,6 +181,8 @@ export default class SearchBox extends Vue {
             --this.selected
           }
           target.value = this.suggests[this.selected]
+          target.setSelectionRange(0, target.value.length)
+          event.preventDefault()
         }
         break
       case 'ArrowDown':
@@ -191,6 +193,8 @@ export default class SearchBox extends Vue {
             ++this.selected
           }
           target.value = this.suggests[this.selected]
+          target.setSelectionRange(0, target.value.length)
+          event.preventDefault()
         }
         break
       default:
@@ -238,7 +242,7 @@ export default class SearchBox extends Vue {
 #search-input {
   top: 0;
   width: var(--input-width);
-  padding: 1em;
+  padding: 1em 2em 1em 1em;
   border-left: none;
   border-right: none;
   color: white;
