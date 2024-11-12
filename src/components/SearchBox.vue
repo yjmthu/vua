@@ -80,9 +80,11 @@ export default class SearchBox extends Vue {
     this.showEngines = false
   }
 
-  switchEngine (letter: string) {
-    if (letter.length !== 1) return false
-    const index = findEngineByShortCutkey(letter)
+  switchEngine (sentence: string) {
+    if (sentence.length < 1) return false
+    const letter = sentence[sentence.length - 1]
+    if (!/[a-zA-Z]/.test(letter)) return false
+    const index = findEngineByShortCutkey(letter.toLowerCase())
     if (index !== -1) {
       this.currentEngineIndex = index
       localStorage.setItem('enginesData', JSON.stringify(this.enginesData))
@@ -155,7 +157,7 @@ export default class SearchBox extends Vue {
     const target = event.target as HTMLInputElement
     if (event.key === 'Tab') {
       if (this.switchEngine(target.value)) {
-        target.value = ''
+        target.value = target.value.slice(0, -1)
       } else {
         this.shiftEngine(!event.shiftKey)
         this.getSuggests(target)

@@ -137,19 +137,12 @@ export default class HomeView extends Vue {
 
     const detail = await getFileDetail(position)
     if (detail && detail.mtime > time) {
-      // if (confirm('检测到云端书签有更新，是否下载？')) {
-      //   await this.downloadSyncData(detail.mtime)
-      // }
-      if (await this.downloadSyncData(detail.mtime)) {
-        this.showMessage('下载云端数据成功。', 'success')
-      } else {
-        this.showMessage('下载云端数据失败。', 'error')
-      }
+      await this.downloadSyncData(detail.mtime)
     } else if (detail) {
       this.syncStatus = `同步时间：${new Date(detail.mtime * 1000).toLocaleString()}`
-      console.log('书签无需更新。')
+      console.log('无需更新。')
     } else {
-      this.showMessage('无法获取云端书签信息。', 'warning')
+      this.showMessage('无法获取云端信息。', 'warning')
       this.syncStatus = `同步失败，本地时间：${new Date(time * 1000).toLocaleString()}`
     }
   }
@@ -171,25 +164,28 @@ export default class HomeView extends Vue {
       wallpaper: wallpaperBar.exportWallpaperData()
     }
     if (!await uploadSyncData(syncData, position, true)) {
-      this.showMessage('数据上传失败！', 'error')
+      this.showMessage('同步数据上传失败！', 'error')
       return
     }
     const detail = await getFileDetail(position)
     if (detail) {
       this.saveSyncTime(detail.mtime)
-      this.showMessage('数据上传成功！', 'success')
+      this.showMessage('同步数据上传成功！', 'success')
     } else {
-      this.showMessage('无法获取文件信息！', 'warning')
+      this.showMessage('无法获取同步信息！', 'warning')
     }
   }
 
   async downloadSyncData (timestamp?: number) {
     const position = this.getBookmarkPosition()
-    if (!position) return false
+    if (!position) {
+      this.showMessage('未选择数据存储位置！', 'warning')
+      return false
+    }
 
     const data = await downloadFile(position)
     if (!data) {
-      this.showMessage('下载书签失败！', 'error')
+      this.showMessage('下载同步数据失败！', 'error')
       return false
     }
 
@@ -208,13 +204,13 @@ export default class HomeView extends Vue {
     if (timestamp === undefined) {
       const detail = await getFileDetail(position)
       if (!detail) {
-        this.showMessage('下载书签信息失败！', 'warning')
+        this.showMessage('获取同步信息失败！', 'error')
         return false
       }
       timestamp = detail.mtime
     }
     this.saveSyncTime(timestamp)
-    this.showMessage('下载书签成功！', 'info')
+    this.showMessage('下载同步数据成功！', 'info')
     return true
   }
 

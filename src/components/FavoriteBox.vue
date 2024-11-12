@@ -165,7 +165,7 @@ export default class FavoriteBox extends Vue {
         this.bookmarkDirStack = [allBookmarks[0]]
         this.currentNode = this.rootNode
       } else {
-        console.log('获取书签失败。')
+        this.showMessage('获取书签失败。', 'error')
       }
     })
   }
