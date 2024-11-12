@@ -14,6 +14,7 @@ interface EngineData {
   icon: string
   logo: string
   url: string
+  shortCutkey: string
   getSuggests: (arg0: string, arg1: (data: string[]) => void) => void
 }
 
@@ -34,6 +35,7 @@ const engines: EngineData[] = [
     icon: 'Bing',
     logo: 'microsoft',
     url: 'https://www.bing.com/search?q=',
+    shortCutkey: 'b',
     getSuggests: forbidCors ? (text, callback) => {
       fetchJSONP(`https://api.bing.com/qsonhs.aspx?type=cb&q=${text}`, {
         jsonpCallback: 'cb' // 默认callback，改为cb
@@ -74,6 +76,7 @@ const engines: EngineData[] = [
     name: 'Google',
     icon: 'Google',
     logo: 'google',
+    shortCutkey: 'g',
     url: 'https://www.google.com/search?q=',
     getSuggests: forbidCors ? (text, callback) => {
       fetchJSONP(`https://suggestqueries.google.com/complete/search?client=youtube&q=${text}`, {
@@ -105,6 +108,7 @@ const engines: EngineData[] = [
     name: 'DuckDuckGo',
     icon: 'DuckDuckGo',
     logo: 'duckduckgo',
+    shortCutkey: 'd',
     url: 'https://duckduckgo.com/?q=',
     // getSuggests: baiduSuggests
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
@@ -127,6 +131,7 @@ const engines: EngineData[] = [
     name: 'Baidu',
     icon: 'Baidu',
     logo: 'baidu',
+    shortCutkey: 'a',
     url: 'https://www.baidu.com/s?wd=',
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
       controller?.abort()
@@ -145,6 +150,7 @@ const engines: EngineData[] = [
     name: '豆瓣电影',
     icon: 'Douban',
     logo: 'douban',
+    shortCutkey: 'm',
     url: 'https://search.douban.com/movie/subject_search?search_text=',
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
       controller?.abort()
@@ -163,6 +169,7 @@ const engines: EngineData[] = [
     name: 'Yandex',
     icon: 'Yandex',
     logo: 'yandex',
+    shortCutkey: 'y',
     url: 'https://yandex.com/search/?text=',
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
       controller?.abort()
@@ -181,6 +188,7 @@ const engines: EngineData[] = [
     name: 'Qwant',
     icon: 'Qwant',
     logo: 'qwant',
+    shortCutkey: 'q',
     url: 'https://www.qwant.com/?q=',
     getSuggests: (text, callback) => {
       controller?.abort()
@@ -203,6 +211,7 @@ const engines: EngineData[] = [
     name: '知乎',
     icon: 'ZhiHu',
     logo: 'zhihu',
+    shortCutkey: 'z',
     url: 'https://www.zhihu.com/search?type=content&q=',
     getSuggests: (text, callback) => {
       controller?.abort()
@@ -224,6 +233,7 @@ const engines: EngineData[] = [
     name: 'Wikipedia',
     icon: 'Wikipedia',
     logo: 'wikipedia',
+    shortCutkey: 'w',
     url: 'https://en.wikipedia.org/wiki/Special:Search?search=',
     getSuggests: forbidCors ? (text, callback) => {
       fetchJSONP(`https://en.wikipedia.org/w/api.php?format=json&action=query&generator=search&gsrsearch=${text}`, {
@@ -261,6 +271,7 @@ const engines: EngineData[] = [
     name: 'GitHub',
     icon: 'GitHub',
     logo: 'github',
+    shortCutkey: 'h',
     url: 'https://github.com/search?type=repositories&q=',
     // getSuggests: baiduSuggests // https://kaifa.baidu.com/rest/v1/recommend/suggests?wd=rust
     getSuggests: forbidCors ? baiduSuggests: (text, callback) => {
@@ -279,6 +290,7 @@ const engines: EngineData[] = [
     name: 'BiliBili',
     icon: 'BiliBili',
     logo: 'bilibili',
+    shortCutkey: 'l',
     url: 'https://search.bilibili.com/all?keyword=',
     getSuggests: forbidCors ? baiduSuggests: (text, callback) => {
       controller?.abort()
@@ -304,6 +316,7 @@ const engines: EngineData[] = [
     name: 'Scholar',
     icon: 'GoogleScholar',
     logo: 'scholar',
+    shortCutkey: 's',
     url: 'https://scholar.google.com/scholar?q=',
     getSuggests: (text, callback) => {
       controller?.abort()
@@ -319,4 +332,18 @@ const engines: EngineData[] = [
   }
 ]
 
-export { engines }
+const shortCutkeys: { [key: string]: number } = {}
+
+engines.forEach((item, index) => {
+  shortCutkeys[item.shortCutkey] = index
+})
+
+function findEngineByShortCutkey (key: string) {
+  const index = shortCutkeys[key]
+  if (index !== undefined) {
+    return index
+  }
+  return -1
+}
+
+export { engines, findEngineByShortCutkey }

@@ -24,7 +24,7 @@ import SuggestBox from './SuggestBox.vue'
 import SvgIcon from './SvgIcon.vue'
 import EngineBox from './EngineBox.vue'
 
-import { engines } from '@/utils/search'
+import { engines, findEngineByShortCutkey } from '@/utils/search'
 import { gotoPage } from '@/utils/public'
 
 @Options({
@@ -78,6 +78,17 @@ export default class SearchBox extends Vue {
     if (input) this.getSuggests(input)
     localStorage.setItem('enginesData', JSON.stringify(this.enginesData))
     this.showEngines = false
+  }
+
+  switchEngine (letter: string) {
+    if (letter.length !== 1) return false
+    const index = findEngineByShortCutkey(letter)
+    if (index !== -1) {
+      this.currentEngineIndex = index
+      localStorage.setItem('enginesData', JSON.stringify(this.enginesData))
+      return true
+    }
+    return false
   }
 
   shiftEngine (forward: boolean) {
@@ -143,8 +154,12 @@ export default class SearchBox extends Vue {
     if (!event.target) return
     const target = event.target as HTMLInputElement
     if (event.key === 'Tab') {
-      this.shiftEngine(!event.shiftKey)
-      this.getSuggests(target)
+      if (this.switchEngine(target.value)) {
+        target.value = ''
+      } else {
+        this.shiftEngine(!event.shiftKey)
+        this.getSuggests(target)
+      }
       event.preventDefault()
     }
     if (target.value.length === 0) {
