@@ -23,7 +23,12 @@
       @showMessage="showMessage"
       @showEditBox="showEditBox"/>
   </div>
-  <small v-show="message" :style="{'background-color': messageColor}"> {{ message }}</small>
+  <div class="message-box" v-if="messages.length">
+    <div v-for="msg in messages" :key="msg.id" :style="{'background-color': msg.color}">
+      {{ msg.content }}
+    </div>
+  </div>
+  <!-- <small v-show="message" :style="{'background-color': messageColor}"> {{ message }}</small> -->
 </template>
 
 <script lang="ts">
@@ -35,7 +40,7 @@ import FavoriteBox from '@/components/FavoriteBox.vue'
 import DirectLinks from '@/components/DirectLinks.vue'
 import BookmarkEdit from '@/components/BookmarkEdit.vue'
 import TabAsync from '@/utils/tabsync'
-import { FilePosition, SyncData, Bookmark, uploadSyncData, getFileDetail, downloadFile, MessageType, messageColor } from '@/utils/typedef'
+import { FilePosition, SyncData, Bookmark, uploadSyncData, getFileDetail, downloadFile, MessageType, Message, messageColor } from '@/utils/typedef'
 import { createApp, App } from 'vue'
 
 @Options({
@@ -49,8 +54,7 @@ import { createApp, App } from 'vue'
 })
 export default class HomeView extends Vue {
   showFavorite = false
-  message = ''
-  messageColor = 'black'
+  messages: Message[] = []
   tabAsync = new TabAsync()
   syncStatus = '数据未同步'
   // syncing = false
@@ -73,16 +77,14 @@ export default class HomeView extends Vue {
 
   messageId: number | null = null
   showMessage (message: string, type: MessageType) {
-    this.messageColor = messageColor[type]
-    this.message = message
+    const msg: Message = { id: 0, content: message, color: messageColor[type], type }
+    this.messages.push(msg)
 
-    if (this.messageId !== null) {
-      clearTimeout(this.messageId)
-    }
-
-    this.messageId = setTimeout(() => {
-      this.message = ''
-      this.messageId = null
+    msg.id = setTimeout(() => {
+      const index = this.messages.indexOf(msg)
+      if (index >= 0) {
+        this.messages.splice(index, 1)
+      }
     }, 3000)
   }
 
@@ -260,17 +262,21 @@ export default class HomeView extends Vue {
   align-items: center;
 }
 
-small {
+.message-box {
   display: block;
   position: absolute;
   top: 0;
   right: 0;
-  padding: 6px 12px;
-  margin: 10px;
-  line-height: 16px;
-  font-size: 14px;
-  border-radius: 14px;
-  color: white;
+  margin: 6px 10px;
+
+  &>div {
+    margin: 4px;
+    padding: 6px 12px;
+    line-height: 16px;
+    font-size: 14px;
+    border-radius: 14px;
+    color: white;
+  }
 }
 
 @media screen and (max-width: 720px) {

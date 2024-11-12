@@ -161,6 +161,14 @@ const messageColor = {
 
 // the key in the messageColor object
 type MessageType = keyof typeof messageColor
-export { messageColor, MessageType }
+
+interface Message {
+  content: string
+  id: number
+  type: MessageType
+  color: string
+}
+
+export { messageColor, MessageType, Message }
 
 export { DeployData, ScheduleData, FileDetail, FilePosition, Bookmark, SyncData, WallpaperData, BookmarkData, getFileDetail, uploadSyncData, downloadFile }
