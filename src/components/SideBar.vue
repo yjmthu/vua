@@ -256,9 +256,6 @@ export default class SideBar extends Vue {
     document.addEventListener('click', this.hideWhenClick.bind(this))
 
     this.readWallpaperData()
-    this.readScheduleData()
-    this.readFavoriteImageList()
-    this.readDeployData()
     this.readWallpaperDataIndex()
     this.updateDetailData()
 
@@ -269,7 +266,7 @@ export default class SideBar extends Vue {
     })
 
     this.tabAsync.addListener('SCHEDULE_DATA_CHANGE', () => {
-      this.readWallpaperData()
+      this.readScheduleData()
       this.initBackgroundImage()
     })
 
@@ -288,6 +285,12 @@ export default class SideBar extends Vue {
       this.updateDetailData()
       this.initBackgroundImage()
     })
+  }
+
+  readNativeData () {
+    this.readDeployData()
+    this.readFavoriteImageList()
+    this.readScheduleData()
   }
 
   readFavoriteImageList () {
@@ -323,7 +326,6 @@ export default class SideBar extends Vue {
   }
 
   saveScheduleData () {
-    console.log('Save schedule data.')
     if (this.wallpaperDataIndex === '-1') {
       localStorage.setItem('scheduleData', JSON.stringify(this.scheduleData))
       this.tabAsync.postMessage({ name: 'SCHEDULE_DATA_CHANGE' })
@@ -373,6 +375,7 @@ export default class SideBar extends Vue {
       this.deployData = current.deploy
     } else {
       this.wallpaperDataIndex = '-1'
+      this.readNativeData()
     }
   }
 
