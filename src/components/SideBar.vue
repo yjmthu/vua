@@ -76,6 +76,11 @@
             v-model.number="wallBlur" @mouseup="saveScheduleData" @touchend="saveScheduleData"/>
           <div> {{ wallBlur }} </div>
         </div>
+        <h4>模糊条件</h4>
+        <select v-model="blurCondition" class="side-bar-input">
+          <option value="always">总是模糊</option>
+          <option value="focused">聚焦输入</option>
+        </select>
       </div>
       <small id="sync-status"> {{ syncStatus }}</small>
     </nav>
@@ -121,7 +126,8 @@ function getFavoriteImageList () {
   },
   props: {
     tabAsync: TabAsync,
-    syncStatus: String
+    syncStatus: String,
+    searchInputFocused: Boolean
   }
 })
 export default class SideBar extends Vue {
@@ -129,6 +135,7 @@ export default class SideBar extends Vue {
   syncStatus!: string
   isChromeExt = typeof chrome !== 'undefined' && chrome.runtime !== undefined
   showSideBar = false
+  searchInputFocused!: boolean
   domain = 'cloud.tsinghua.edu.cn'
   host = `https://${this.domain}`
   wallDataIndex = '-1'
@@ -146,7 +153,8 @@ export default class SideBar extends Vue {
     lastChange: 0,
     interval: 300,
     intervalUnit: 'second',
-    backgroundBlur: 0
+    backgroundBlur: 0,
+    blurCondition: 'always'
   }
 
   storage = new HugeStorage('backgroundImage')
@@ -206,6 +214,16 @@ export default class SideBar extends Vue {
     return this.wallDataIndex
   }
 
+  get blurCondition () {
+    return this.scheduleData.blurCondition
+  }
+
+  set blurCondition (value: 'always' | 'focused') {
+    this.scheduleData.blurCondition = value
+    this.updateBlur()
+    this.saveScheduleData()
+  }
+
   get wallBlur () {
     return this.scheduleData.backgroundBlur
   }
@@ -213,13 +231,28 @@ export default class SideBar extends Vue {
   set wallBlur (value: number) {
     if (value < 0 || value > 100) return
 
-    const el = document.getElementById('wallpaper')
-    if (el) {
-      el.style.filter = `blur(${value}px)`
-      this.scheduleData.backgroundBlur = value
-    } else {
+    this.scheduleData.backgroundBlur = value
+    this.updateBlur()
+  }
+
+  updateBlur () {
+    const el = this.getWallpaperElement()
+    if (!el) {
       this.showMessage('无法找到背景元素！', 'error')
+      return
     }
+
+    if (this.blurCondition === 'focused') {
+      el.style.transition = 'filter 0.5s'
+      el.style.filter = `blur(${this.searchInputFocused ? this.wallBlur : 0}px)`
+    } else {
+      el.style.transition = 'none'
+      el.style.filter = `blur(${this.wallBlur}px)`
+    }
+  }
+
+  getWallpaperElement () {
+    return document.getElementById('wallpaper')
   }
 
   changeWallpaperDataName () {
@@ -285,6 +318,9 @@ export default class SideBar extends Vue {
       this.updateDetailData()
       this.initBackgroundImage()
     })
+    this.$watch('searchInputFocused', () => {
+      this.updateBlur()
+    })
   }
 
   readNativeData () {
@@ -319,7 +355,7 @@ export default class SideBar extends Vue {
   }
 
   getCurrentBackgroundImage () {
-    const app = document.getElementById('app')
+    const app = this.getWallpaperElement()
     if (!app) return ''
     const text = app.style.backgroundImage
     return text.slice(5, text.length - 2)
@@ -567,7 +603,7 @@ export default class SideBar extends Vue {
   }
 
   async setBackgroundImage (url: string) {
-    const app = document.getElementById('wallpaper')
+    const app = this.getWallpaperElement()
     if (!app) return
 
     if (typeof chrome === 'undefined' || chrome.runtime === undefined) {

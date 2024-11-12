@@ -13,7 +13,7 @@
     <div id="search-button" class="row-center scrub-backgound" @click="directSearch">
       <SvgIcon name="Magnifier" size="24px"/>
     </div>
-    <SuggestBox :suggests="suggests" :selected="selected" v-show="focused"/>
+    <SuggestBox :suggests="suggests" :selected="selected" v-show="searchInputFocused && hasSuggestions"/>
     <EngineBox :class="`${showEngines ? 'show':'hide'}-pop-y`" :currentEngineIndex=enginesData.currentEngineIndex @setEngineIndex="setEngineIndex"></EngineBox>
   </div>
 </template>
@@ -32,12 +32,16 @@ import { gotoPage } from '@/utils/public'
     SuggestBox,
     EngineBox,
     SvgIcon
+  },
+  props: {
+    searchInputFocused: Boolean
   }
 })
 export default class SearchBox extends Vue {
   suggests = new Array<string>()
   selected = -1
-  focused = false
+  searchInputFocused!: boolean
+  hasSuggestions = false
   showEngines = false
   enginesData = {
     currentEngineIndex: 0
@@ -111,11 +115,14 @@ export default class SearchBox extends Vue {
         if (target.classList.contains('suggest-item')) {
           gotoPage(this.currentEngine.url, target.innerHTML, true)
         }
-        this.toggleSuggests(false)
+        this.hasSuggestions = false
       } else {
         const target = ev.target as HTMLInputElement
-        this.toggleSuggests(target.value.length !== 0)
+        this.hasSuggestions = target.value.length !== 0
+        this.toggleFocus(true)
+        return
       }
+      this.toggleFocus(false)
     })
   }
 
@@ -124,13 +131,12 @@ export default class SearchBox extends Vue {
     if (el) gotoPage(this.currentEngine.url, el.value, false)
   }
 
-  toggleSuggests (on: boolean) {
-    if (on) {
-      this.focused = true
-    } else {
-      this.focused = false
+  toggleFocus (on: boolean) {
+    if (!on) {
       this.selected = -1
     }
+    if (on === this.searchInputFocused) return
+    this.$emit('searchInputFocus', on)
   }
 
   submitSearch (event: KeyboardEvent) {
@@ -180,7 +186,7 @@ export default class SearchBox extends Vue {
 
   getSuggests (target: HTMLInputElement) {
     if (!target || target.value.length === 0) {
-      this.toggleSuggests(false)
+      this.hasSuggestions = false
       return
     }
 
@@ -188,7 +194,7 @@ export default class SearchBox extends Vue {
       this.suggests = result
       this.selected = -1
       if (this.suggests.length) {
-        this.toggleSuggests(target.value.length !== 0)
+        this.hasSuggestions = target.value.length !== 0
       }
     })
   }

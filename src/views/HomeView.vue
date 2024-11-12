@@ -7,6 +7,8 @@
       @showEditBox="showEditBox"
       @uploadSyncData="uploadSyncData"/>
     <SearchBox
+      :searchInputFocused="searchInputFocused"
+      @searchInputFocus="searchInputFocus"
       @engineChanged="changeEngineLogo"/>
     <FavoriteBox ref="favoriteBox"
       v-show="showFavorite"
@@ -19,6 +21,7 @@
     <SideBar ref="sideBar"
       :tabAsync="tabAsync"
       :syncStatus="syncStatus"
+      :searchInputFocused="searchInputFocused"
       @uploadSyncData="uploadSyncData"
       @showMessage="showMessage"
       @showEditBox="showEditBox"/>
@@ -57,6 +60,7 @@ export default class HomeView extends Vue {
   messages: Message[] = []
   tabAsync = new TabAsync()
   syncStatus = '数据未同步'
+  searchInputFocused = false
   // syncing = false
 
   mounted (): void {
@@ -67,6 +71,10 @@ export default class HomeView extends Vue {
 
   toggleFavrotite () {
     this.showFavorite = !this.showFavorite
+  }
+
+  searchInputFocus (focused: boolean) {
+    this.searchInputFocused = focused
   }
 
   changeEngineLogo (logoName: string) {

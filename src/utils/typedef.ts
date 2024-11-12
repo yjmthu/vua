@@ -81,6 +81,7 @@ interface ScheduleData {
   // interval unit to show
   intervalUnit: 'second' | 'minute' | 'hour' | 'day'
   backgroundBlur: number
+  blurCondition: 'always' | 'focused'
 }
 
 interface WallpaperData {
