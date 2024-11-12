@@ -418,6 +418,8 @@ export default class SideBar extends Vue {
     }
 
     this.saveWallpaperData(data, false)
+
+    this.initBackgroundImage()
   }
 
   exportWallpaperData () {
