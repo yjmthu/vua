@@ -13,6 +13,8 @@ interface SakuraOptions {
   wind: number
   // sakura opacity
   opacity: number
+  // sakura limit
+  limit: number
 }
 
 class Sakura {
@@ -48,15 +50,17 @@ class Sakura {
     this.scale = Math.random()
   }
 
-  update (w: number, h: number) {
+  update (w: number, h: number, timePassed: number) {
+    timePassed /= 17
+
     let random = Math.random() - 0.5
-    this.x += -1.7 + random * 0.5
+    this.x += (-1.7 + random * 0.5) * timePassed
 
     random = Math.random()
-    this.y += 1.5 + random * 0.7
+    this.y += (1.5 + random * 0.7) * timePassed
 
     random = Math.random()
-    this.rotation += random * 0.03
+    this.rotation += (random * 0.03) * timePassed
 
     if (this.x > w || this.x < 0 || this.y > h || this.y < 0) {
       if (this.limit === 0) {
@@ -103,6 +107,8 @@ class SakuraEffetc {
   context!: CanvasRenderingContext2D | null
   sakuras: Sakura[] = []
   options!: SakuraOptions
+  lastTime = 0
+  timePassed = 0
 
   image = new Image()
   constructor (div: HTMLElement, options?: SakuraOptions) {
@@ -142,13 +148,15 @@ class SakuraEffetc {
 
   initOptions (options?: SakuraOptions) {
     if (!options) {
+      const count = Math.ceil(window.innerWidth * window.innerHeight / 20000)
       this.options = {
-        count: 30,
+        count: count,
         size: 40,
         color: '#fff',
         speed: 1,
         wind: 0,
-        opacity: 0.5
+        opacity: 0.5,
+        limit: Math.floor(6000 / (window.innerWidth + window.innerHeight))
       }
     } else {
       this.options = options
@@ -164,7 +172,7 @@ class SakuraEffetc {
 
     for (let i = 0; i < this.sakuras.length; i++) {
       const sakura = this.sakuras[i]
-      sakura.update(w, h)
+      sakura.update(w, h, this.timePassed)
       sakura.draw(ctx, this.image)
       if (sakura.isDied()) {
         this.sakuras.splice(i--, 1)
@@ -172,12 +180,13 @@ class SakuraEffetc {
     }
   }
 
-  start (limit = -1) {
+  start () {
     const canvas = this.createCanvas()
     this.sakuras = []
     for (let i = 0; i < this.options.count; i++) {
-      this.sakuras.push(new Sakura(canvas, limit))
+      this.sakuras.push(new Sakura(canvas, this.options.limit))
     }
+    this.lastTime = Date.now()
     this.animate()
   }
 
@@ -194,6 +203,9 @@ class SakuraEffetc {
       }
       return
     }
+    const time = Date.now()
+    this.timePassed = time - this.lastTime
+    this.lastTime = time
     this.drawSakura()
     requestAnimationFrame(() => this.animate())
   }

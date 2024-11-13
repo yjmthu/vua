@@ -140,7 +140,6 @@ export default class HomeView extends Vue {
       await this.downloadSyncData(detail.mtime)
     } else if (detail) {
       this.syncStatus = `同步时间：${new Date(detail.mtime * 1000).toLocaleString()}`
-      console.log('无需更新。')
     } else {
       this.showMessage('无法获取云端信息。', 'warning')
       this.syncStatus = `同步失败，本地时间：${new Date(time * 1000).toLocaleString()}`
@@ -151,7 +150,7 @@ export default class HomeView extends Vue {
     if (typeof chrome === 'undefined' || chrome.runtime === undefined) return
     const position = this.getBookmarkPosition()
     if (!position) {
-      this.showMessage('同步失败，未选择云端存储位置！', 'warning')
+      this.showMessage('同步失败，未选择云端存储位置！', 'info')
       return
     }
 
@@ -165,14 +164,17 @@ export default class HomeView extends Vue {
     }
     if (!await uploadSyncData(syncData, position, true)) {
       this.showMessage('同步数据上传失败！', 'error')
+      this.syncStatus = '同步失败'
       return
     }
     const detail = await getFileDetail(position)
     if (detail) {
       this.saveSyncTime(detail.mtime)
       this.showMessage('同步数据上传成功！', 'success')
+      this.syncStatus = `同步时间：${new Date(detail.mtime * 1000).toLocaleString()}`
     } else {
       this.showMessage('无法获取同步信息！', 'warning')
+      this.syncStatus = '同步失败'
     }
   }
 
@@ -210,7 +212,7 @@ export default class HomeView extends Vue {
       timestamp = detail.mtime
     }
     this.saveSyncTime(timestamp)
-    this.showMessage('下载同步数据成功！', 'info')
+    this.showMessage('下载同步数据成功！', 'success')
     return true
   }
 

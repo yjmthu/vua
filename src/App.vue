@@ -19,7 +19,7 @@ export default class App extends Vue {
     const app = document.getElementById('app')
     if (!app) return
     this.sakura = new SakuraEffetc(app)
-    this.sakura.start(3)
+    this.sakura.start()
 
     // setTimeout(() => {
     //   this.sakura?.stop()
