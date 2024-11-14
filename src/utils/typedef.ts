@@ -1,3 +1,4 @@
+import { Vue } from 'vue-class-component'
 import axios from 'axios'
 
 interface Bookmark {
@@ -173,3 +174,9 @@ interface Message {
 export { messageColor, MessageType, Message }
 
 export { DeployData, ScheduleData, FileDetail, FilePosition, Bookmark, SyncData, WallpaperData, BookmarkData, getFileDetail, uploadSyncData, downloadFile }
+
+export class MsgVue extends Vue {
+  showMessage (msg: string, type: MessageType) {
+    this.$emit('showMessage', msg, type)
+  }
+}

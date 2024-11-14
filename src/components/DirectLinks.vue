@@ -1,17 +1,17 @@
 <template>
   <ul class="row-center">
-    <li v-for="(item, index) in directLinks" :key="index" @contextmenu.prevent="showDirectLinkEdit(index)">
-      <a :href="item.url" target="_blank">
+    <li v-for="(item, index) in directLinks" :key="index" @contextmenu.prevent="onRightClick($event, index)">
+      <div class="direct-link" @click="openUrl($event, index)">
         <img :src="item.icon" :style="{'background-color': item.color}"/>
         <div>{{ item.name }}</div>
-      </a>
+      </div>
     </li>
   </ul>
 </template>
 
 <script lang="ts">
-import { Options, Vue } from 'vue-class-component'
-import { Bookmark } from '@/utils/typedef'
+import { Options } from 'vue-class-component'
+import { Bookmark, MsgVue } from '@/utils/typedef'
 import TabAsync from '@/utils/tabsync'
 
 @Options({
@@ -19,7 +19,7 @@ import TabAsync from '@/utils/tabsync'
     tabAsync: TabAsync
   }
 })
-export default class DirectLinks extends Vue {
+export default class DirectLinks extends MsgVue {
   tabAsync!: TabAsync
   public directLinks: Bookmark[] = [
     {
@@ -59,18 +59,31 @@ export default class DirectLinks extends Vue {
       color: '#0c6dfe'
     },
     {
-      name: 'Wikipedia',
-      url: 'https://en.wikipedia.org',
-      icon: 'https://files.codelife.cc/icons/wikipedia.svg',
-      color: 'black'
+      name: 'Gitee',
+      url: 'https://gitee.com',
+      icon: 'https://files.codelife.cc/icons/gitee.svg',
+      color: '#961a1d'
     },
     {
-      name: 'Wallhaven',
-      url: 'https://wallhaven.cc',
-      icon: 'https://files.codelife.cc/icons/wallhave.svg',
+      name: '微软邮箱',
+      url: 'https://outlook.live.com',
+      icon: 'https://www.svgrepo.com/show/452067/ms-outlook.svg',
       color: '#0c4061'
     }
   ]
+
+  openUrl (e: MouseEvent, index: number) {
+    const url = this.directLinks[index].url
+    if (!url) return
+
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.ctrlKey) {
+      window.location.href = url
+    } else {
+      window.open(url)
+    }
+  }
 
   readDirectLinks () {
     const data = localStorage.getItem('directLinks')
@@ -107,6 +120,23 @@ export default class DirectLinks extends Vue {
     })
   }
 
+  onRightClick (e: MouseEvent, index: number) {
+    // e.preventDefault()
+    e.stopPropagation()
+
+    if (e.ctrlKey) {
+      const url = this.directLinks[index].url
+      if (url) {
+        navigator.clipboard.writeText(url)
+        this.showMessage('已复制链接', 'success')
+      } else {
+        this.showMessage('无法复制链接', 'warning')
+      }
+    } else {
+      this.showDirectLinkEdit(index)
+    }
+  }
+
   showDirectLinkEdit (index: number) {
     const favorite = this.directLinks[index]
 
@@ -122,7 +152,7 @@ export default class DirectLinks extends Vue {
 </script>
 
 <style scoped lang="scss">
-a {
+.direct-link {
   text-decoration: none;
   font-size: 12px;
   color: white;
@@ -130,6 +160,7 @@ a {
   align-items: center;
   gap: 4px;
   flex-direction: column;
+  cursor: pointer;
 
   width: var(--icon-size)
 }

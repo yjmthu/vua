@@ -5,7 +5,12 @@
       <SvgIcon name="Down" size="12px"></SvgIcon>
     </div>
     <div id="search-input-box">
-      <input id="search-input" type="search" class="scrub-backgound" @keydown="submitSearch" @input="e => getSuggests(e.target as HTMLInputElement)" placeholder="输入搜索内容" required>
+      <input id="search-input" type="search" class="scrub-backgound"
+        @keydown="submitSearch"
+        @input="getSuggests($event.target as HTMLInputElement)"
+        @onfocus="toggleFocus(true)"
+        @onblur="toggleFocus(false)"
+        placeholder="输入搜索内容" required>
       <i @click="clearInput">
         <SvgIcon name="Clear" size="30px"/>
       </i>
@@ -137,6 +142,19 @@ export default class SearchBox extends Vue {
         return
       }
       this.toggleFocus(false)
+    })
+
+    document.addEventListener('keydown', ev => {
+      if (ev.key === 'Tab') {
+        ev.preventDefault()
+        if (!this.searchInputFocused) {
+          const input = document.getElementById('search-input') as HTMLInputElement | null
+          if (input && document.activeElement !== input) {
+            input.focus()
+            this.toggleFocus(true)
+          }
+        }
+      }
     })
   }
 

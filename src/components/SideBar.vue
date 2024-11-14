@@ -90,9 +90,9 @@
 <script lang="ts">
 // seafile api: https://download.seafile.com/published/web-api/v2.1
 
-import { Vue, Options } from 'vue-class-component'
+import { Options } from 'vue-class-component'
 import SvgIcon from '@/components/SvgIcon.vue'
-import { FilePosition, getFileDetail, DeployData, Bookmark, ScheduleData, WallpaperData, MessageType } from '@/utils/typedef'
+import { FilePosition, getFileDetail, DeployData, Bookmark, ScheduleData, WallpaperData, MsgVue } from '@/utils/typedef'
 import axios from 'axios'
 import HugeStorage from '@/utils/storage'
 import TabAsync from '@/utils/tabsync'
@@ -130,7 +130,7 @@ function getFavoriteImageList () {
     searchInputFocused: Boolean
   }
 })
-export default class SideBar extends Vue {
+export default class SideBar extends MsgVue {
   tabAsync!: TabAsync
   syncStatus!: string
   isChromeExt = typeof chrome !== 'undefined' && chrome.runtime !== undefined
@@ -163,10 +163,6 @@ export default class SideBar extends Vue {
     dir: 'Folder',
     file: 'Document',
     mine: 'Gift'
-  }
-
-  showMessage (msg: string, type: MessageType) {
-    this.$emit('showMessage', msg, type)
   }
 
   set wallpaperDataIndex (index: string) {

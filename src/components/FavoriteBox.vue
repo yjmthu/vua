@@ -29,10 +29,10 @@
 </template>
 
 <script lang="ts">
-import { Vue, Options } from 'vue-class-component'
+import { Options } from 'vue-class-component'
 import SvgIcon from './SvgIcon.vue'
 import TabAsync from '@/utils/tabsync'
-import { Bookmark, BookmarkData, MessageType } from '@/utils/typedef'
+import { Bookmark, BookmarkData, MsgVue } from '@/utils/typedef'
 
 @Options({
   components: {
@@ -42,7 +42,7 @@ import { Bookmark, BookmarkData, MessageType } from '@/utils/typedef'
     tabAsync: TabAsync
   }
 })
-export default class FavoriteBox extends Vue {
+export default class FavoriteBox extends MsgVue {
   favoriteBookmark: Bookmark[] = []
   bookmarkDirStack: chrome.bookmarks.BookmarkTreeNode[] = []
   currentNode: chrome.bookmarks.BookmarkTreeNode | null = null
@@ -188,10 +188,6 @@ export default class FavoriteBox extends Vue {
       this.readFavoriteBookmarks()
     })
     // this.isChromeExt = typeof chrome !== 'undefined' && chrome.bookmarks !== undefined
-  }
-
-  showMessage (msg: string, type: MessageType) {
-    this.$emit('showMessage', msg, type)
   }
 
   importingBookmarks = false

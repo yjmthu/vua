@@ -5,6 +5,7 @@
     <DirectLinks ref="directLinks"
       :tabAsync="tabAsync"
       @showEditBox="showEditBox"
+      @showMessage="showMessage"
       @uploadSyncData="uploadSyncData"/>
     <SearchBox
       :searchInputFocused="searchInputFocused"
