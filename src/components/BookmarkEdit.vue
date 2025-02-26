@@ -2,7 +2,7 @@
   <div class="mask" @click="cancelConfig">
     <div class="center" @click="$event.stopPropagation()">
       <h4>内容编辑器</h4>
-      <div class="edit-box">
+      <div class="edit-box" ref="box">
         <div class="edit-item">
           <span>名称</span>
           <input type="text" name="name" v-model="content.name">
@@ -20,7 +20,7 @@
         </div>
         <div v-if="'color' in content" class="edit-item">
           <span>颜色</span>
-          <input type="text" name="color" v-model="content.color">
+          <input tabindex="3" type="text" name="color" v-model="content.color">
           <SvgIcon name="Copy" size="24px" @click="copyContent"/>
         </div>
       </div>
@@ -55,9 +55,45 @@ export default class BookmarkEdit extends Vue {
 
   mounted (): void {
     this.content = JSON.parse(JSON.stringify(this.bookmark))
+
+    const container = this.$refs.box
+    if (container instanceof HTMLElement) {
+      const input = container.querySelector('input') as HTMLInputElement
+      if (input) {
+        input.focus()
+        input.select()
+      }
+      container.addEventListener('keydown', (event: KeyboardEvent) => {
+        if (event.key === 'Enter') {
+          this.confirmConfig()
+        } else if (event.key === 'Escape') {
+          this.cancelConfig()
+        } else if (event.key === 'Tab') {
+          console.log('Tab pressed')
+          this.shiftFoucus(event)
+        }
+      })
+    }
+  }
+
+  shiftFoucus (event: KeyboardEvent): void {
+    const box = this.$refs.box as HTMLElement
+    const inputs = box.querySelectorAll('input')
+    const index = Array.from(inputs).findIndex(input => input === event.target)
+    if (index >= 0) {
+      const nextIndex = (index + 1) % inputs.length
+      console.log('index:', index, nextIndex, inputs.length)
+      inputs[nextIndex].focus()
+      inputs[nextIndex].select()
+    }
   }
 
   confirmConfig () {
+    // check the content
+    if (this.content.name.trim() === '') {
+      this.callback(null)
+      return
+    }
     this.callback(this.content)
   }
 

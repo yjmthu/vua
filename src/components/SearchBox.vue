@@ -146,7 +146,17 @@ export default class SearchBox extends Vue {
 
     document.addEventListener('keydown', ev => {
       if (ev.key === 'Tab') {
+        // check the target element or its parent element is mask
         ev.preventDefault()
+
+        let target = ev.target as HTMLElement
+        while (target) {
+          if (target.classList.contains('mask')) {
+            return
+          }
+          target = target.parentElement as HTMLElement
+        }
+
         if (!this.searchInputFocused) {
           const input = document.getElementById('search-input') as HTMLInputElement | null
           if (input && document.activeElement !== input) {
