@@ -38,7 +38,7 @@ const engines: EngineData[] = [
     // url: 'https://www.bing.com/search?q=',
     shortCutkey: 'b',
     getUrl: (text: string) => {
-      return `https://www.bing.com/search?q=${text}&qs=n&form=QBRE&sp=-1&pq=${text}`
+      return `https://www.bing.com/search?q=${text}&qs=n&form=QBRE&sp=-1`
     },
     getSuggests: forbidCors ? (text, callback) => {
       text = encodeURIComponent(text)
