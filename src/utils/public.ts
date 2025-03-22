@@ -1,20 +1,15 @@
 const regex = /^(?:(http|https|ftp):\/\/)((?:[\w-]+\.)+[a-z0-9]+)((?:\/[^/?#]*)+)?(\?[^#]+)?(#.+)?$/i
 
-function gotoPage (prefix: string, text: string, smart: boolean) {
-  const url = `http://${text}`
-  let href = null
-  if (regex.test(text)) {
-    href = text
-  } else if (smart && regex.test(url)) {
-    href = url
-  } else {
-    href = prefix + text
-  }
+function gotoPage (text: string, callback: (text: string) => string) {
+  window.open(callback(encodeURIComponent(text)))
+}
 
-  if (href) {
-    // window.location.href = href
-    window.open(href)
+function smartGotoPage (text: string, callback: (text: string) => string) {
+  if (regex.test(text)) {
+    window.open(text)
+  } else {
+    window.open(callback(encodeURIComponent(text)))
   }
 }
 
-export { gotoPage }
+export { gotoPage, smartGotoPage }

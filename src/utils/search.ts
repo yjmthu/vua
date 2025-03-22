@@ -13,8 +13,9 @@ interface EngineData {
   name: string
   icon: string
   logo: string
-  url: string
+  // url: string
   shortCutkey: string
+  getUrl: (text: string) => string
   getSuggests: (arg0: string, arg1: (data: string[]) => void) => void
 }
 
@@ -34,9 +35,13 @@ const engines: EngineData[] = [
     name: '必应',
     icon: 'Bing',
     logo: 'microsoft',
-    url: 'https://www.bing.com/search?q=',
+    // url: 'https://www.bing.com/search?q=',
     shortCutkey: 'b',
+    getUrl: (text: string) => {
+      return `https://www.bing.com/search?q=${text}&qs=n&form=QBRE&sp=-1&pq=${text}`
+    },
     getSuggests: forbidCors ? (text, callback) => {
+      text = encodeURIComponent(text)
       fetchJSONP(`https://api.bing.com/qsonhs.aspx?type=cb&q=${text}`, {
         jsonpCallback: 'cb' // 默认callback，改为cb
       })
@@ -55,6 +60,7 @@ const engines: EngineData[] = [
     } : (text, callback) => {
       controller?.abort()
       controller = new AbortController()
+      text = encodeURIComponent(text)
       axios.get(`https://api.bing.com/qsonhs.aspx?q=${text}`, { signal: controller.signal })
         .then(response => {
           const theAS = response?.data?.AS
@@ -77,7 +83,10 @@ const engines: EngineData[] = [
     icon: 'Google',
     logo: 'google',
     shortCutkey: 'g',
-    url: 'https://www.google.com/search?q=',
+    // url: 'https://www.google.com/search?q=',
+    getUrl: (text: string) => {
+      return `https://www.google.com/search?q=${text}`
+    },
     getSuggests: forbidCors ? (text, callback) => {
       fetchJSONP(`https://suggestqueries.google.com/complete/search?client=youtube&q=${text}`, {
         jsonpCallback: 'jsonp' // 默认callback，改为cb
@@ -109,7 +118,10 @@ const engines: EngineData[] = [
     icon: 'DuckDuckGo',
     logo: 'duckduckgo',
     shortCutkey: 'd',
-    url: 'https://duckduckgo.com/?q=',
+    // url: 'https://duckduckgo.com/?q=',
+    getUrl: (text: string) => {
+      return `https://duckduckgo.com/?q=${text}`
+    },
     // getSuggests: baiduSuggests
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
       controller?.abort()
@@ -132,7 +144,10 @@ const engines: EngineData[] = [
     icon: 'Baidu',
     logo: 'baidu',
     shortCutkey: 'a',
-    url: 'https://www.baidu.com/s?wd=',
+    // url: 'https://www.baidu.com/s?wd=',
+    getUrl: (text: string) => {
+      return `https://www.baidu.com/s?wd=${text}`
+    },
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
       controller?.abort()
       controller = new AbortController()
@@ -151,7 +166,10 @@ const engines: EngineData[] = [
     icon: 'Douban',
     logo: 'douban',
     shortCutkey: 'm',
-    url: 'https://search.douban.com/movie/subject_search?search_text=',
+    // url: 'https://search.douban.com/movie/subject_search?search_text=',
+    getUrl: (text: string) => {
+      return `https://search.douban.com/movie/subject_search?search_text=${text}`
+    },
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
       controller?.abort()
       controller = new AbortController()
@@ -170,7 +188,10 @@ const engines: EngineData[] = [
     icon: 'Yandex',
     logo: 'yandex',
     shortCutkey: 'y',
-    url: 'https://yandex.com/search/?text=',
+    // url: 'https://yandex.com/search/?text=',
+    getUrl: (text: string) => {
+      return `https://yandex.com/search/?text=${text}`
+    },
     getSuggests: forbidCors ? baiduSuggests : (text, callback) => {
       controller?.abort()
       controller = new AbortController()
@@ -189,7 +210,10 @@ const engines: EngineData[] = [
     icon: 'Qwant',
     logo: 'qwant',
     shortCutkey: 'q',
-    url: 'https://www.qwant.com/?q=',
+    // url: 'https://www.qwant.com/?q=',
+    getUrl: (text: string) => {
+      return `https://www.qwant.com/?q=${text}`
+    },
     getSuggests: (text, callback) => {
       controller?.abort()
       controller = new AbortController()
@@ -212,7 +236,10 @@ const engines: EngineData[] = [
     icon: 'ZhiHu',
     logo: 'zhihu',
     shortCutkey: 'z',
-    url: 'https://www.zhihu.com/search?type=content&q=',
+    // url: 'https://www.zhihu.com/search?type=content&q=',
+    getUrl: (text: string) => {
+      return `https://www.zhihu.com/search?type=content&q=${text}`
+    },
     getSuggests: (text, callback) => {
       controller?.abort()
       controller = new AbortController()
@@ -234,7 +261,10 @@ const engines: EngineData[] = [
     icon: 'Wikipedia',
     logo: 'wikipedia',
     shortCutkey: 'w',
-    url: 'https://en.wikipedia.org/wiki/Special:Search?search=',
+    // url: 'https://en.wikipedia.org/wiki/Special:Search?search=',
+    getUrl: (text: string) => {
+      return `https://en.wikipedia.org/wiki/Special:Search?search=${text}`
+    },
     getSuggests: forbidCors ? (text, callback) => {
       fetchJSONP(`https://en.wikipedia.org/w/api.php?format=json&action=query&generator=search&gsrsearch=${text}`, {
         jsonpCallback: 'callback' // 默认callback，改为cb
@@ -272,7 +302,10 @@ const engines: EngineData[] = [
     icon: 'GitHub',
     logo: 'github',
     shortCutkey: 'h',
-    url: 'https://github.com/search?type=repositories&q=',
+    // url: 'https://github.com/search?type=repositories&q=',
+    getUrl: (text: string) => {
+      return `https://github.com/search?type=repositories&q=${text}`
+    },
     // getSuggests: baiduSuggests // https://kaifa.baidu.com/rest/v1/recommend/suggests?wd=rust
     getSuggests: forbidCors ? baiduSuggests: (text, callback) => {
       controller?.abort()
@@ -291,7 +324,10 @@ const engines: EngineData[] = [
     icon: 'BiliBili',
     logo: 'bilibili',
     shortCutkey: 'l',
-    url: 'https://search.bilibili.com/all?keyword=',
+    // url: 'https://search.bilibili.com/all?keyword=',
+    getUrl: (text: string) => {
+      return `https://search.bilibili.com/all?keyword=${text}`
+    },
     getSuggests: forbidCors ? baiduSuggests: (text, callback) => {
       controller?.abort()
       controller = new AbortController()
@@ -317,7 +353,10 @@ const engines: EngineData[] = [
     icon: 'GoogleScholar',
     logo: 'scholar',
     shortCutkey: 's',
-    url: 'https://scholar.google.com/scholar?q=',
+    // url: 'https://scholar.google.com/scholar?q=',
+    getUrl: (text: string) => {
+      return `https://scholar.google.com/scholar?q=${text}`
+    },
     getSuggests: (text, callback) => {
       controller?.abort()
       controller = new AbortController()

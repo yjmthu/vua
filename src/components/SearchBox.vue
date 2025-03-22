@@ -30,7 +30,7 @@ import SvgIcon from './SvgIcon.vue'
 import EngineBox from './EngineBox.vue'
 
 import { engines, findEngineByShortCutkey } from '@/utils/search'
-import { gotoPage } from '@/utils/public'
+import { gotoPage, smartGotoPage } from '@/utils/public'
 
 @Options({
   components: {
@@ -132,7 +132,7 @@ export default class SearchBox extends Vue {
       const target = ev.target as HTMLElement
       if (target.id !== 'search-input') {
         if (target.classList.contains('suggest-item')) {
-          gotoPage(this.currentEngine.url, target.innerHTML, true)
+          smartGotoPage(target.innerHTML, this.currentEngine.getUrl)
         }
         this.hasSuggestions = false
       } else {
@@ -170,7 +170,7 @@ export default class SearchBox extends Vue {
 
   directSearch () {
     const el = document.getElementById('search-input') as HTMLInputElement | null
-    if (el) gotoPage(this.currentEngine.url, el.value, false)
+    if (el) gotoPage(el.value, this.currentEngine.getUrl)
   }
 
   toggleFocus (on: boolean) {
@@ -199,9 +199,9 @@ export default class SearchBox extends Vue {
     switch (event.key) {
       case 'Enter':
         if (this.selected !== -1 && this.selected < this.suggests.length) {
-          gotoPage(this.currentEngine.url, this.suggests[this.selected], true)
+          smartGotoPage(this.suggests[this.selected], this.currentEngine.getUrl)
         } else {
-          gotoPage(this.currentEngine.url, target.value, true)
+          gotoPage(target.value, this.currentEngine.getUrl)
         }
         break
       case 'ArrowUp':
